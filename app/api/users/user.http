@@ -1,0 +1,28 @@
+###
+
+POST http://localhost:3000/api/users HTTP/1.1
+Content-Type: application/json
+
+{
+    "sender": "672316cac33dd18076c0e570",
+    "receiver":"6717a795842934ad5d8150df"    
+}
+
+###
+GET http://localhost:3000/api/users/67126ada232a9f36d10a65c5 HTTP/1.1
+
+###
+POST http://localhost:3000/api/users/get HTTP/1.1
+Content-Type: application/json
+
+{
+    "_id":"67126ada232a9f36d10a65c5"    
+}
+
+###
+PUT http://localhost:3000/api/users/67126ada232a9f36d10a65c5 HTTP/1.1
+Content-Type: application/json
+
+{
+    "data":"67126ada232a9f36d10a65c5"    
+}

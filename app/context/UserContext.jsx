@@ -9,7 +9,7 @@ const UsersContextProvider = ({ children }) => {
   const { data: session } = useSession();
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
-  console.log(session)
+
   useEffect(() => {
     if (!session) {
       setUser(null);
@@ -64,7 +64,6 @@ const UsersContextProvider = ({ children }) => {
       if (!response.ok) throw new Error("User update failed");
 
       const data = await response.json();
-      console.log("data", data)
       // ✅ Set imagefileUrl directly
       if (data?.user && data?.imagefileUrl) {
         setUser({

@@ -150,9 +150,8 @@ let user = null;
     // Remove the ID from user's todos array
     user.todos = user.todos.filter(todoId => todoId.toString() !== _id);
     const deleted = await user.save();
-    console.log("deleted",deleted)
 
-    return NextResponse.json({ message: `Todo deleted successfully`, deletedTodo }, { status: 200 });
+    return NextResponse.json({ message: `Todo deleted successfully`, deleted }, { status: 200 });
   } catch (error) {
     console.error(error);
     return NextResponse.json({ message: "Error deleting Todo" }, { status: 500 });

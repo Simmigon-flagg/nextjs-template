@@ -9,7 +9,7 @@ export async function POST(request) {
         const hashedPassword = await bcrypt.hash(password, 10);
         await connectToDatabase();
         await Users.create({ name, email, password: hashedPassword, imageId: null })
-        console.log(Users)
+        
         return NextResponse.json({ message: "User Registered" }, { status: 201 })
     } catch (error) {
         console.error(error)

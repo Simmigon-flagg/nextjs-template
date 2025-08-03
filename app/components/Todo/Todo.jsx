@@ -1,181 +1,139 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import Filters from "../../components/Filters";
-import SortDropdown from "../../components/SortDropdown";
-import List from "../List";
-import BulkActions from "../../components/BulkActions";
-import Create from "../Create/Create";
+import { useContext, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { TodoContext } from "@/app/context/TodoContext";
+import SkeletonTodo from "../Skeleton/SkeletonTodo";
 
-export default function Todo() {
-  const ITEMS_PER_PAGE = 4;
-
-  const [query, setQuery] = useState("");
-  const [currentPage, setCurrentPage] = useState(1);
-  const [sortConfig, setSortConfig] = useState({
-    key: "createdAt",
-    direction: "desc",
-  });
-  const [startDate, setStartDate] = useState("");
-  const [endDate, setEndDate] = useState("");
-  const [selectedIds, setSelectedIds] = useState(new Set());
-  const [fetchedTodos, setFetchedTodos] = useState([]);
-  const [totalPages, setTotalPages] = useState(1);
-  const [fetchError, setFetchError] = useState(null);
-  const [loading, setLoading] = useState(true);
+const Todo = ({ _id }) => {
+  const router = useRouter();
+  const { todos, updateTodo, setTodos } = useContext(TodoContext);
+  const [todo, setTodo] = useState(null);
+  const [formData, setFormData] = useState({ title: "", notes: "" });
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
 
   useEffect(() => {
-    setCurrentPage(1); // reset page if query/filter changes
-  }, [query, startDate, endDate]);
+    const found = todos.find((item) => item._id === _id);
+    if (found) {
+      setTodo(found);
+    }
+  }, [todos, _id]);
 
-  useEffect(() => {
-    const fetchTodos = async () => {
-      setLoading(true);
-      try {
-        const params = new URLSearchParams({
-          page: currentPage,
-          limit: ITEMS_PER_PAGE,
-          search: query,
-          sortBy: sortConfig.key,
-          sortOrder: sortConfig.direction,
-          ...(startDate && { startDate }),
-          ...(endDate && { endDate }),
-        });
+  if (!todo) return <SkeletonTodo />;
 
-        const res = await fetch(`/api/todos?${params.toString()}`);
-        const data = await res.json();
-
-        if (!res.ok) throw new Error(data.message || "Failed to fetch");
-
-        setFetchedTodos(data.todos);
-        setTotalPages(data.pagination.totalPages);
-        setFetchError(null);
-      } catch (err) {
-        setFetchError(err.message);
-        setFetchedTodos([]);
-        setTotalPages(1);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchTodos();
-  }, [currentPage, query, sortConfig, startDate, endDate]);
-
-  const toggleSelect = (id) => {
-    setSelectedIds((prev) => {
-      const newSet = new Set(prev);
-      newSet.has(id) ? newSet.delete(id) : newSet.add(id);
-      return newSet;
+  const openEditModal = () => {
+    setFormData({
+      title: todo.title || "",
+      notes: todo.notes || "",
     });
+    setIsEditModalOpen(true);
   };
 
-  const handleToggle = async (id, todo) => {
-    try {
-      await fetch(`/api/todos/${id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ fav: !todo.fav }),
-      });
-      // Update state manually or re-fetch if needed
-      setFetchedTodos((prev) =>
-        prev.map((t) => (t._id === id ? { ...t, fav: !t.fav } : t))
-      );
-    } catch (error) {
-      console.error("Failed to toggle fav:", error);
-    }
+  const handleChange = ({ target: { name, value } }) => {
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const deleteItem = async (id) => {
-    try {
-      await fetch(`/api/todos/${id}`, {
-        method: "DELETE"
-      });
-      // Update state manually or re-fetch if needed
-      setFetchedTodos((prev) => prev.filter((t) => t._id !== id));
+const handleSave = async () => {
+  setIsUpdating(true);
+  const updated = await updateTodo(todo._id, formData);
+  if (updated) {
+    setTodo(updated); // Local update
+    setTodos((prev) =>
+      prev.map((item) => (item._id === updated._id ? updated : item))
+    ); // Global update
+  }
+  setIsUpdating(false);
+  setIsEditModalOpen(false);
+};
 
-    } catch (error) {
-      console.error("Failed to toggle fav:", error);
-    }
-  };
 
   return (
-    <div className="min-h-screen w-full bg-gray-100 dark:bg-gray-800 p-6">
-      <div className="max-w-4xl mx-auto space-y-6 text-white">
-        <Create />
+    <section className="min-h-screen bg-gradient-to-b from-white to-gray-100 py-20 px-6">
+      <div className="max-w-5xl mx-auto bg-white rounded-3xl shadow-2xl overflow-hidden">
+        <div className="p-8 space-y-6">
+          <div className="flex justify-between items-center border-b pb-2">
+            <h3 className="text-xl font-semibold text-gray-800">
+              {todo.title}
+            </h3>
+            <span className="text-sm text-gray-500">
+              {new Date(todo.createdAt).toLocaleString()}
+            </span>
+          </div>
 
-        {/* Filters */}
-        <form>
-          <Filters
-            query={query}
-            setQuery={setQuery}
-            startDate={startDate}
-            setStartDate={setStartDate}
-            endDate={endDate}
-            setEndDate={setEndDate}
-          />
-        </form>
-
-        {/* Sort Dropdown */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 text-white">
-          <label className="text-sm font-semibold">Sort by:</label>
-          <SortDropdown sortConfig={sortConfig} setSortConfig={setSortConfig} />
-        </div>
-
-        {/* Error Display */}
-        {fetchError && (
-          <p className="text-sm text-red-600">{`Error: ${fetchError}`}</p>
-        )}
-
-        {/* Loading State */}
-        {loading ? (
-          <p className="text-center text-white">Loading...</p>
-        ) : (
-          <>
-            {/* Todo List */}
-            <List
-              items={fetchedTodos}
-              selectedIds={selectedIds}
-              toggleSelect={toggleSelect}
-              handleToggle={handleToggle}
-            />
-
-            {/* Bulk Actions */}
-            <BulkActions
-              filtered={fetchedTodos}
-              selectedIds={selectedIds}
-              deleteItem={deleteItem}
-              handleToggle={handleToggle}
-              clearSelection={() => setSelectedIds(new Set())}
-            />
-
-            {/* Pagination Controls */}
-            <div className=" left-0 w-full bg-white border-t shadow-md z-50">
-              <div className="flex justify-center gap-4 p-4">
-                <button
-                  onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-                  disabled={currentPage === 1}
-                  className="px-4 py-2 rounded bg-gray-300 hover:bg-gray-400 disabled:opacity-50"
-                >
-                  Prev
-                </button>
-                <span className="self-center text-gray-700">
-                  Page {currentPage} of {totalPages}
-                </span>
-                <button
-                  onClick={() =>
-                    setCurrentPage((prev) => Math.min(prev + 1, totalPages))
-                  }
-                  disabled={currentPage === totalPages}
-                  className="px-4 py-2 rounded bg-gray-300 hover:bg-gray-400 disabled:opacity-50"
-                >
-                  Next
-                </button>
-              </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label className="block text-gray-600 text-sm mb-1">Title</label>
+              <p className="text-gray-900">{todo.title}</p>
             </div>
-          </>
-        )}
+            <div>
+              <label className="block text-gray-600 text-sm mb-1">Notes</label>
+              <p className="text-gray-900">{todo.notes}</p>
+            </div>
+          </div>
+
+          <div className="pt-6 flex gap-4">
+            <button
+              onClick={() => router.back()}
+              className="px-6 py-2 bg-gray-200 text-gray-800 rounded-lg shadow hover:bg-gray-300 transition"
+            >
+              Back
+            </button>
+            <button
+              onClick={openEditModal}
+              className="px-6 py-2 bg-indigo-600 text-white rounded-lg shadow hover:bg-indigo-700 transition"
+            >
+              Edit Todo
+            </button>
+          </div>
+        </div>
       </div>
-    </div>
+
+      {isEditModalOpen && (
+        <div className="fixed inset-0 flex items-center bg-gray-600/50 justify-center z-50 text-black">
+          <div className="bg-white rounded-lg shadow-lg w-full max-w-md p-6 space-y-4">
+            <h2 className="text-xl font-semibold text-gray-800">Edit Todo</h2>
+
+            <div className="space-y-2">
+              <label className="block text-sm text-gray-600">Title</label>
+              <input
+                type="text"
+                name="title"
+                value={formData.title}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+              />
+
+              <label className="block text-sm text-gray-600">Notes</label>
+              <textarea
+                name="notes"
+                value={formData.notes}
+                onChange={handleChange}
+                rows={4}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+              />
+            </div>
+
+            <div className="flex justify-end gap-2 pt-4">
+              <button
+                onClick={() => setIsEditModalOpen(false)}
+                className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSave}
+                disabled={isUpdating}
+                className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 disabled:opacity-50"
+              >
+                {isUpdating ? "Saving…" : "Save"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </section>
   );
-}
+};
+
+export default Todo;

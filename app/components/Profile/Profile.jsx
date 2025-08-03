@@ -8,7 +8,7 @@ const Profile = () => {
   const { user, updateImage, setUser, update } = useContext(UsersContext);
 
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  // rename state+setter to make intention clear:
+
   const [profileData, setProfileData] = useState({ name: user?.name || "" });
 
   const [selectedFile, setSelectedFile] = useState(null);

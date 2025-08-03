@@ -1,8 +1,9 @@
-import Todo from "../components/Todo/Todo"
+
+import Todos from "../components/Todos/Todos"
 
 const page = () => {
   return (
-    <Todo />
+    <Todos />
   )
 }
 

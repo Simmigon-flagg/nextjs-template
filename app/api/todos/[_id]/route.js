@@ -55,7 +55,7 @@ export async function PUT(request, { params }) {
     const updated = await Todo.findByIdAndUpdate(_id, data, { new: true });
 
     // const updated = await Todo.findByIdAndUpdate(_id, data, { new: true });
-
+    console.log(updated)
     if (!updated) {
       return NextResponse.json({ message: `Todo with id ${_id} not found` }, { status: 404 });
     }

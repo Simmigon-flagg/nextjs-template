@@ -140,7 +140,7 @@ export async function GET(request) {
     }
 
     const todos = await Todo.find(query)
-      .select("_id title completed createdAt fav")
+      .select("_id title completed createdAt notes fav")
       .sort({ [sortBy]: sortOrder })
       .collation(sortBy === "title" ? { locale: "en", strength: 2 } : undefined)
       .skip(skip)

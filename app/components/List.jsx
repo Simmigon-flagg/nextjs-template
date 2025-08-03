@@ -1,5 +1,6 @@
 import { StarIcon as StarSolid } from "@heroicons/react/24/solid";
 import { StarIcon as StarOutline } from "@heroicons/react/24/outline";
+import Link from "next/link";
 
 const List = ({ items, selectedIds, toggleSelect, handleToggle }) => {
     return (
@@ -22,11 +23,22 @@ const List = ({ items, selectedIds, toggleSelect, handleToggle }) => {
                                     className="h-4 w-4"
                                 />
                                 <div>
-                                    <p className="font-medium">{item.title}</p>
-                                    <p className="text-sm text-gray-600">
+                                    <div className="flex gap-8 items-center">
+                                        <p className="font-medium">{item.title}</p>
+                                        <Link href={`/todos/${item._id}`}>
+                                            <span className="font-medium text-gray-600">
+                                                {item.notes && item.notes.length > 8
+                                                    ? item.notes.slice(0, 20) + "..."
+                                                    : item.notes}
+                                            </span>
+                                        </Link>
+                                    </div>
+                                    <p className="text-sm text-gray-600 mt-1">
                                         {new Date(item.createdAt).toLocaleString()}
                                     </p>
                                 </div>
+
+
                             </div>
                             <div className="ml-4">
                                 {item.fav ? (

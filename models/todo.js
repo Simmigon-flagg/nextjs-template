@@ -26,7 +26,7 @@ const TodoSchema = new Schema(
   { timestamps: true }
 );
 
-// 🧠 Index for better query performance by user/completion status
+
 TodoSchema.index({ userId: 1, completed: 1 });
 
 const Todo = models.Todo || model("Todo", TodoSchema);

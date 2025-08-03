@@ -124,6 +124,7 @@ const TodoContextProvider = ({ children }) => {
     <TodoContext.Provider
       value={{
         todos,
+        setTodos,
         loading,
         page,
         totalPages,

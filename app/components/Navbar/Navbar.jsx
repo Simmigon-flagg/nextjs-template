@@ -64,10 +64,12 @@ const Navbar = () => {
                     src={user.imagefileUrl || user.image}
                     alt="Profile"
                     fill
+                    sizes="44px"
                     className="object-cover"
                     priority
                   />
                 </div>
+
 
               </button>
               {dropdownOpen && (

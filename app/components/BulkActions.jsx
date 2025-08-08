@@ -1,19 +1,19 @@
-const BulkActions = ({ filtered, selectedIds, handleToggle, clearSelection, deleteItem }) => {
+const BulkActions = ({ filtered, selectedIds, updateTodo, clearSelection, deleteItem }) => {
     const selected = filtered.filter(item => selectedIds.has(item._id));
 
     const setFavoriteForSelected = (favValue) => {
         selected.forEach(item => {
             if (item.fav !== favValue) {
-                handleToggle(item._id, item, favValue);
+                updateTodo(item._id, item, favValue);
             }
         });
     };
     const setDeleteForSelected = () => {
         selected.forEach(item => {
-
             deleteItem(item._id);
-
         });
+        clearSelection()
+     
     };
 
     if (selectedIds.size === 0) return null;
@@ -46,7 +46,7 @@ const BulkActions = ({ filtered, selectedIds, handleToggle, clearSelection, dele
                 </button>
                 <button
                     onClick={clearSelection}
-                    className="text-red-600 hover:underline text-xs sm:text-sm"
+                    className="text-grey-600 hover:underline text-xs sm:text-sm"
                 >
                     Clear Selection
                 </button>

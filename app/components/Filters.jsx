@@ -16,8 +16,6 @@ const Filters = ({ query, setQuery, startDate, setStartDate, endDate, setEndDate
                 />
             </div>
 
-
-
             <div className="flex flex-wrap gap-2 items-center text-xs">
                 <label className="flex items-center gap-1">
                     Start Date:
@@ -42,7 +40,7 @@ const Filters = ({ query, setQuery, startDate, setStartDate, endDate, setEndDate
                 <button
                     type="button"
                     onClick={clearDates}
-                    className="px-2 py-0.5 text-xs text-gray-300 hover:text-white hover:bg-gray-700 rounded transition"
+                    className="px-2 py-0.5 text-xs text-gray-900 hover:text-white hover:bg-gray-700 rounded transition"
                 >
                     Clear Dates
                 </button>

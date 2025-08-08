@@ -4,14 +4,13 @@ import { createContext, useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 
 export const TodoContext = createContext({});
-const TodoContextProvider = ({ children }) => {
 
+const TodoContextProvider = ({ children }) => {
   const PAGE_SIZE = 5;
   const { data: session } = useSession();
   const [todos, setTodos] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Pagination & search state
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [search, setSearch] = useState("");
@@ -21,52 +20,66 @@ const TodoContextProvider = ({ children }) => {
     setPage(1);
   }, [search]);
 
-  useEffect(() => {
+  // Refactored fetchTodos to reuse
+  const fetchTodos = async () => {
     if (!session?.user?.email) {
       setTodos([]);
       setLoading(false);
       return;
     }
 
-    const fetchTodos = async () => {
-
-      try {
-        setLoading(true);
-        const res = await fetch(`/api/todos?page=${page}&limit=${PAGE_SIZE}&search=${encodeURIComponent(search)}`);
-        const data = await res.json();
-      
-        setTodos(data.todos || []);
-        setTotalPages(data.pagination?.totalPages || 1);
-      } catch (err) {
-        console.error(err)
-        console.error("Error fetching todos:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchTodos();
-  }, [session?.user?.email, page, search]);
-
-  const createTodo = async (data) => {
-    setLoading(true);
     try {
-      const res = await fetch("/api/todos", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      });
-      const incoming = await res.json();
-      setTodos((prev) => [incoming.todo, ...prev]);
+      setLoading(true);
+      const res = await fetch(
+        `/api/todos?page=${page}&limit=${PAGE_SIZE}&search=${encodeURIComponent(
+          search
+        )}`
+      );
+      const data = await res.json();
+      setTodos(data.todos || []);
+      setTotalPages(data.pagination?.totalPages || 1);
     } catch (err) {
-      console.error("Error creating todo:", err);
+      console.error("Error fetching todos:", err);
     } finally {
       setLoading(false);
     }
   };
 
-  const updateTodo = async (_id, updateData) => {
+  useEffect(() => {
+    fetchTodos();
+  }, [session?.user?.email, page, search]);
 
+const createTodo = async (formData) => {
+  setLoading(true);
+  try {
+    const res = await fetch("/api/todos", {
+      method: "POST",
+      body: formData, // Don't stringify, just send FormData
+      // Don't set headers, browser sets multipart boundaries
+    });
+
+    const incoming = await res.json();
+
+    if (!res.ok) {
+      console.error("Failed to create todo:", incoming.error || incoming);
+      return;
+    }
+
+    if (incoming?.todo) {
+      setPage(1); // force to first page to show the new todo
+      await fetchTodos();
+    } else {
+      console.warn("No todo returned from API:", incoming);
+    }
+  } catch (err) {
+    console.error("Error creating todo:", err);
+  } finally {
+    setLoading(false);
+  }
+};
+
+
+  const updateTodo = async (_id, updateData) => {
     try {
       const res = await fetch(`/api/todos/${_id}`, {
         method: "PUT",
@@ -77,8 +90,7 @@ const TodoContextProvider = ({ children }) => {
       setTodos((prev) =>
         prev.map((todo) => (todo?._id === _id ? incoming.updated : todo))
       );
-
-      return incoming.updated
+      return incoming.updated;
     } catch (err) {
       console.error("Error updating todo:", err);
     }
@@ -94,15 +106,11 @@ const TodoContextProvider = ({ children }) => {
   };
 
   const getTodoDetails = async (_id) => {
-
     try {
       setLoading(true);
       const res = await fetch(`/api/todos/${_id}`);
-
-      if (!res.ok) throw new Error('Failed to fetch todo details');
-
+      if (!res.ok) throw new Error("Failed to fetch todo details");
       const data = await res.json();
-
       return data.todo;
     } catch (err) {
       console.error(err);
@@ -110,7 +118,6 @@ const TodoContextProvider = ({ children }) => {
       setLoading(false);
     }
   };
-
 
   const nextPage = () => {
     if (page < totalPages) setPage(page + 1);

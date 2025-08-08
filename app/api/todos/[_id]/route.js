@@ -5,6 +5,7 @@ import User from "../../../../models/user";
 import Todo from "../../../../models/todo";
 
 export async function PUT(request, { params }) {
+
   let session = null;
 
   try {
@@ -22,6 +23,7 @@ export async function PUT(request, { params }) {
   try {
     data = await request.json(); // ✅ safely attempt to parse JSON
   } catch (err) {
+
     return NextResponse.json({ message: "Invalid data" }, { status: 400 });
   }
 
@@ -54,8 +56,6 @@ export async function PUT(request, { params }) {
 
     const updated = await Todo.findByIdAndUpdate(_id, data, { new: true });
 
-    // const updated = await Todo.findByIdAndUpdate(_id, data, { new: true });
-    console.log(updated)
     if (!updated) {
       return NextResponse.json({ message: `Todo with id ${_id} not found` }, { status: 404 });
     }
@@ -67,7 +67,7 @@ export async function PUT(request, { params }) {
   }
 }
 
-export async function GET(request, { params } = {}) {
+export async function GET(request, { params }) {
   const session = await getServerSession();
 
   if (!session) {
@@ -109,12 +109,13 @@ export async function GET(request, { params } = {}) {
 
 export async function DELETE(request, { params }) {
   const session = await getServerSession();
-
   if (!session) {
     return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
   }
+
   const user_email = session.user.email;
   const { _id } = await params;
+
   if (!_id) {
     return NextResponse.json({ message: "Missing todo ID" }, { status: 400 });
   }
@@ -123,41 +124,103 @@ export async function DELETE(request, { params }) {
     await connectToDatabase();
   } catch (error) {
     return NextResponse.json({ message: "Database Error" }, { status: 500 });
-
   }
-let user = null;
 
+  let user;
   try {
-
-     user = await User.findOne({ email: user_email }).select("todos");
+    user = await User.findOne({ email: user_email }).select("todos");
     if (!user) {
       return NextResponse.json({ message: `User not found` }, { status: 404 });
     }
-
   } catch (error) {
     console.error(error);
-    return NextResponse.json({ message: "Error deleting Todo" }, { status: 500 });
+    return NextResponse.json({ message: "Error finding user" }, { status: 500 });
   }
+
   try {
-
-
-
-    // Delete the Todo
     const deletedTodo = await Todo.findByIdAndDelete(_id);
 
+    if (!deletedTodo) {
+      return NextResponse.json({ message: "Todo not found" }, { status: 404 });
+    }
 
+    // Delete associated file from GridFS if it exists
+    if (deletedTodo.file && deletedTodo.file.id) {
+      try {
+        const db = mongoose.connection.db;
+        const bucket = new mongoose.mongo.GridFSBucket(db, { bucketName: "uploads" });
 
-    // Remove the ID from user's todos array
+        await bucket.delete(new mongoose.Types.ObjectId(deletedTodo.file.id));
+      } catch (fileErr) {
+        console.error("Failed to delete file from GridFS:", fileErr);
+        // You can still return 200, or return 500 depending on how critical file deletion is
+      }
+    }
+
+    // Remove the todo from the user's list
     user.todos = user.todos.filter(todoId => todoId.toString() !== _id);
-    const deleted = await user.save();
+    await user.save();
 
-    return NextResponse.json({ message: `Todo deleted successfully`, deleted }, { status: 200 });
+    return NextResponse.json({ message: "Todo and file deleted successfully" }, { status: 200 });
   } catch (error) {
     console.error(error);
     return NextResponse.json({ message: "Error deleting Todo" }, { status: 500 });
   }
+}
+
+export async function PATCH(request, { params }) {
+  console.log("HERE")
+  let session = null;
+
+  try {
+    session = await getServerSession();
+
+  } catch (error) {
+    return NextResponse.json({ message: "Unauthorized", error }, { status: 401 });
+  }
+  const user_email = session?.user?.email;
+
+  let user = null;
+  const { _id } = await params; //  no await here
+
+  let data;
+  try {
+    data = await request.json(); //  safely attempt to parse JSON
+  } catch (err) {
+
+    return NextResponse.json({ message: "Invalid data" }, { status: 400 });
+  }
+
+  try {
+    await connectToDatabase();
+  } catch (error) {
+    return NextResponse.json({ message: "Server Error", error }, { status: 500 });
+  }
+
+  try {
+    user = await User.findOne({ email: user_email }).select("_id");
+   
+    if (!user) {
+      return NextResponse.json({ message: `Todos not found` }, { status: 404 });
+    }
+  } catch (error) {
+    return NextResponse.json({ message: "Database error" }, { status: 500 });
+  }
 
 
+  try {
 
-  
+    // perform update
+
+    const updated = await Todo.findByIdAndUpdate(_id, data, { new: true });
+    
+    if (!updated) {
+      return NextResponse.json({ message: `Todo with id ${_id} not found` }, { status: 404 });
+    }
+
+    return NextResponse.json({ message: `Todo updated successfully`, updated }, { status: 200 });
+  } catch (error) {
+    console.error("Error", error)
+    return NextResponse.json({ message: "Error updating Todo" }, { status: 500 });
+  }
 }

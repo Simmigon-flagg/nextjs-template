@@ -109,7 +109,7 @@ const Navbar = () => {
 
           {user?.imagefileUrl && (
             <>
-              <Link href="/" onClick={closeMenu}>
+              <Link href="/profile" onClick={closeMenu}>
                 <div className="flex items-center gap-2 pb-4">
                   <div className="w-8 h-8 relative">
                     <Image

@@ -1,4 +1,4 @@
-import { Schema, model, models } from 'mongoose';
+import { Schema, model, models } from "mongoose";
 
 const TodoSchema = new Schema(
   {
@@ -6,7 +6,7 @@ const TodoSchema = new Schema(
       type: String,
       required: [true, "Title is required"],
     },
-    fav: {      
+    fav: {
       type: Boolean,
       default: false,
     },
@@ -22,10 +22,13 @@ const TodoSchema = new Schema(
       ref: "User",
       required: true,
     },
+    file: {
+      fileId: { type: Schema.Types.ObjectId },
+      filename: { type: String },
+    },
   },
   { timestamps: true }
 );
-
 
 TodoSchema.index({ userId: 1, completed: 1 });
 

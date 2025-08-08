@@ -3,8 +3,9 @@ import { StarIcon as StarOutline } from "@heroicons/react/24/outline";
 import Link from "next/link";
 
 const List = ({ items, selectedIds, toggleSelect, handleToggle }) => {
+    console.log(items)
     return (
-        <ul className="space-y-2 text-black">
+        <ul className="space-y-3 text-black">
             {items.length > 0 ? (
                 items.map((item) => {
                     const isSelected = selectedIds.has(item._id);
@@ -12,52 +13,59 @@ const List = ({ items, selectedIds, toggleSelect, handleToggle }) => {
                     return (
                         <li
                             key={item._id}
-                            className={`flex items-center justify-between px-4 py-2 rounded hover:bg-gray-200 ${isSelected ? "bg-blue-100" : "bg-gray-100"
-                                }`}
+                            className={`flex items-center justify-between py-2 px-3 rounded-lg shadow-sm cursor-pointer transition-colors
+    hover:bg-gray-100 border border-gray-200
+    ${isSelected ? "bg-indigo-100 border-indigo-400" : "bg-white"}
+  `}
                         >
-                            <div className="flex items-center gap-3">
+                            <div className="flex items-start gap-3">
                                 <input
                                     type="checkbox"
                                     checked={isSelected}
                                     onChange={() => toggleSelect(item._id)}
-                                    className="h-4 w-4"
+                                    className="h-4 w-4 mt-1 accent-indigo-600 cursor-pointer"
                                 />
                                 <div>
-                                    <div className="flex gap-8 items-center">
-                                        <p className="font-medium">{item.title}</p>
-                                        <Link href={`/todos/${item._id}`}>
-                                            <span className="font-medium text-gray-600">
-                                                {item.notes && item.notes.length > 8
-                                                    ? item.notes.slice(0, 20) + "..."
-                                                    : item.notes}
-                                            </span>
-                                        </Link>
-                                    </div>
-                                    <p className="text-sm text-gray-600 mt-1">
+                                    <Link href={`/todos/${item._id}`}>
+                                        <div className="flex flex-col sm:flex-row sm:items-center sm:gap-6 cursor-pointer">
+                                            <p className="font-semibold text-gray-900  whitespace-normal text-sm">
+                                                {item.title}
+                                            </p>
+                                            <p className="text-gray-600  truncate mt-0 sm:mt-0 text-sm">
+                                                <span className="font-medium">Notes:</span>{" "}
+                                                {item.notes && item.notes.length > 40
+                                                    ? item.notes.slice(0, 40) + "..."
+                                                    : item.notes || "No notes"}
+                                            </p>
+                                        </div>
+                                    </Link>
+                                    <p className="text-xs text-gray-500 mt-1">
                                         {new Date(item.createdAt).toLocaleString()}
                                     </p>
                                 </div>
-
-
                             </div>
-                            <div className="ml-4">
+
+                            <div className="ml-4 flex-shrink-0">
                                 {item.fav ? (
                                     <StarSolid
                                         onClick={() => handleToggle(item._id, item)}
-                                        className="h-5 w-5 text-yellow-500 cursor-pointer"
+                                        className="h-5 w-5 text-yellow-400 hover:text-yellow-500 cursor-pointer transition"
+                                        title="Unfavorite"
                                     />
                                 ) : (
                                     <StarOutline
                                         onClick={() => handleToggle(item._id, item)}
-                                        className="h-5 w-5 text-gray-400 cursor-pointer"
+                                        className="h-5 w-5 text-gray-400 hover:text-gray-600 cursor-pointer transition"
+                                        title="Favorite"
                                     />
                                 )}
                             </div>
                         </li>
+
                     );
                 })
             ) : (
-                <li className="text-gray-500">No results found.</li>
+                <li className="text-gray-500 text-center py-8">No results found.</li>
             )}
         </ul>
     );

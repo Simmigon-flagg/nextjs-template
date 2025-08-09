@@ -80,7 +80,7 @@ const Profile = () => {
               alt="Profile Picture"
               fill
               sizes="128px"
-              priority // ✅ Add this
+              priority 
               className="rounded-full object-cover border-4 border-white"
             />
 

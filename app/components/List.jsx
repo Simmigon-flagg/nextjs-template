@@ -3,7 +3,7 @@ import { StarIcon as StarOutline } from "@heroicons/react/24/outline";
 import Link from "next/link";
 
 const List = ({ items, selectedIds, toggleSelect, handleToggle }) => {
-    console.log(items)
+   
     return (
         <ul className="space-y-3 text-black">
             {items.length > 0 ? (

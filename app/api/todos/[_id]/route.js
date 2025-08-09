@@ -17,11 +17,11 @@ export async function PUT(request, { params }) {
   const user_email = session?.user?.email;
 
   let user = null;
-  const { _id } = await params; // ✅ no await here
+  const { _id } = await params; 
 
   let data;
   try {
-    data = await request.json(); // ✅ safely attempt to parse JSON
+    data = await request.json(); 
   } catch (err) {
 
     return NextResponse.json({ message: "Invalid data" }, { status: 400 });
@@ -52,7 +52,7 @@ export async function PUT(request, { params }) {
 
   try {
 
-    // ✅ perform update
+  
 
     const updated = await Todo.findByIdAndUpdate(_id, data, { new: true });
 
@@ -169,7 +169,7 @@ export async function DELETE(request, { params }) {
 }
 
 export async function PATCH(request, { params }) {
-  console.log("HERE")
+
   let session = null;
 
   try {
@@ -181,11 +181,11 @@ export async function PATCH(request, { params }) {
   const user_email = session?.user?.email;
 
   let user = null;
-  const { _id } = await params; //  no await here
+  const { _id } = await params; 
 
   let data;
   try {
-    data = await request.json(); //  safely attempt to parse JSON
+    data = await request.json(); 
   } catch (err) {
 
     return NextResponse.json({ message: "Invalid data" }, { status: 400 });

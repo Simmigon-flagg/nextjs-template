@@ -31,14 +31,14 @@ export async function PUT(request, { params }) {
       stream.push(buffer);
       stream.push(null);
 
-      // ✅ Upload image to GridFS
+      //  Upload image to GridFS
       const uploadStream = bucket.openUploadStream(image.name, {
         contentType: image.type,
       });
 
       stream.pipe(uploadStream);
 
-      // ✅ Wait for image upload to complete
+      //  Wait for image upload to complete
       imageId = await new Promise((resolve, reject) => {
         uploadStream.on("finish", () => resolve(uploadStream.id));
         uploadStream.on("error", (err) => reject(err));

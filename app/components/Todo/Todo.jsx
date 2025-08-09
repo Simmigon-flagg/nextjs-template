@@ -27,7 +27,7 @@ const Todo = ({ _id }) => {
     useEffect(() => {
         
         const found = todos.find((item) => item._id === _id);
-        console.log(found)
+       
         if (found) {
             setTodo(found);
         }

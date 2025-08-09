@@ -16,7 +16,7 @@ export const authOptions = {
         if (!credentials) throw new Error("Missing email or password");
 
         const { email, password } = credentials;
-        console.log("credentials", credentials)
+       
         await connectToDatabase();
 
         const user = await User.findOne({ email });

@@ -16,12 +16,14 @@ export const authOptions = {
         if (!credentials) throw new Error("Missing email or password");
 
         const { email, password } = credentials;
+        console.log("credentials", credentials)
         await connectToDatabase();
 
         const user = await User.findOne({ email });
+       
         if (!user) throw new Error("User not found");
-
         const isValidPassword = await bcrypt.compare(password, user.password);
+
         if (!isValidPassword) throw new Error("Invalid password");
 
         // Generate refresh token and save it in DB only (do not set cookie here)

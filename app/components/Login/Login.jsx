@@ -2,13 +2,14 @@
 import { signIn } from "next-auth/react";
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 const Login = () => {
     const router = useRouter();
 
     const [login, setLogin] = useState({
-        email: "honey@gmail.com",
-        password: "123",
+        email: "",
+        password: "",
     });
     const [error, setError] = useState("");
 
@@ -21,43 +22,43 @@ const Login = () => {
     };
 
 
-const handleSubmit = async (event) => {
-  event.preventDefault();
-  const { email, password } = login;
+    const handleSubmit = async (event) => {
+        event.preventDefault();
+        const { email, password } = login;
+        
+        try {
+            const response = await signIn("credentials", {
+                email,
+                password,
+                redirect: false,
+            });
 
-  try {
-    const response = await signIn("credentials", {
-      email,
-      password,
-      redirect: false,
-    });
+            if (response.error) {
+                setError(response.error);
+                return;
+            }
 
-    if (response.error) {
-      setError(response.error);
-      return;
-    }
+            // Get session to access the refresh token
+            const sessionRes = await fetch("/api/auth/session");
+            const session = await sessionRes.json();
 
-    // Get session to access the refresh token
-    const sessionRes = await fetch("/api/auth/session");
-    const session = await sessionRes.json();
+            const refreshToken = session?.user?.refreshToken;
 
-    const refreshToken = session?.user?.refreshToken;
+            // Send to server to set cookie
+            if (refreshToken) {
+                await fetch("/api/auth/set-refresh-cookie", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ refreshToken }),
+                });
+            }
 
-    // Send to server to set cookie
-    if (refreshToken) {
-      await fetch("/api/auth/set-refresh-cookie", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ refreshToken }),
-      });
-    }
-
-    router.replace("/todos");
-  } catch (err) {
-    console.error(err);
-    setError("Something went wrong. Please try again.");
-  }
-};
+            router.replace("/todos");
+        } catch (err) {
+            console.error(err);
+            setError("Something went wrong. Please try again.");
+        }
+    };
 
 
     return (
@@ -110,6 +111,15 @@ const handleSubmit = async (event) => {
                         />
 
                     </div>
+                    <p className="text-sm text-center mt-4">
+                        <a
+                            href="/forgot-password"
+                            className="text-indigo-600 hover:text-indigo-800 underline"
+                        >
+                            Forgot your password?
+                        </a>
+                    </p>
+
                     <button
                         type="submit"
                         className="w-full bg-indigo-600 text-white py-2 px-4 rounded-md shadow hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
@@ -117,7 +127,12 @@ const handleSubmit = async (event) => {
                         Login
                     </button>
                 </form>
-
+                    <p className="mt-4 text-sm text-gray-600">
+                        Need to register for an account?{" "}
+                        <Link href="/createaccount" className="text-indigo-600 hover:underline">
+                            Create Account
+                        </Link>
+                    </p>
 
             </div>
         </div>

@@ -1,10 +1,10 @@
-const BulkActions = ({ filtered, selectedIds, updateTodo, clearSelection, deleteItem }) => {
+const BulkActions = ({ filtered, selectedIds, handleToggle, clearSelection, deleteItem }) => {
     const selected = filtered.filter(item => selectedIds.has(item._id));
 
     const setFavoriteForSelected = (favValue) => {
         selected.forEach(item => {
             if (item.fav !== favValue) {
-                updateTodo(item._id, item, favValue);
+                handleToggle(item._id, item, favValue);
             }
         });
     };

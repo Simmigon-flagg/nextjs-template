@@ -1,16 +1,16 @@
 "use client";
 
-import { useContext, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import Filters from "../Filters";
 import SortDropdown from "../SortDropdown";
 import List from "../List";
 import BulkActions from "../BulkActions";
-import Create from "../CreateTodo/CreateTodo";
+
 import Link from "next/link";
-import { TodoContext } from "@/app/context/TodoContext";
+
 
 export default function Todos() {
-  const { setTodos } = useContext(TodoContext)
+
   const ITEMS_PER_PAGE = 4;
   const [query, setQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);

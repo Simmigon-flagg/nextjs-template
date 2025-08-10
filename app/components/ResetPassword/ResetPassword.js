@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
+import Link from "next/link";
 
 export default function ResetPasswordPage() {
   const searchParams = useSearchParams();
@@ -79,13 +80,15 @@ export default function ResetPasswordPage() {
               className="w-full px-4 py-2 mt-1 border rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-black"
             />
           </div>
+          <Link href={'/login'}>
           <button
             type="submit"
             disabled={!token}
             className="w-full bg-indigo-600 text-white py-2 px-4 rounded-md shadow hover:bg-indigo-700"
-          >
+            >
             Reset Password
           </button>
+            </Link>
         </form>
       </div>
     </div>

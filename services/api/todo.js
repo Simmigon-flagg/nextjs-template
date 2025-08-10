@@ -31,7 +31,7 @@ export async function uploadFileToGridFS(file) {
 }
 
 export async function createTodoForUser(userId, { title, notes, fileData }) {
- 
+
     const newTodo = new Todo({
         title,
         notes,

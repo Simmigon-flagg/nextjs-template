@@ -1,5 +1,8 @@
 import User from "../../models/user";
 import { connectToDatabase } from "../../utils/database";
+import { sendEmail } from "../../utils/sendEmail";
+import crypto from "crypto";
+import bcrypt from "bcryptjs";
 
 export async function updateUserByEmail(email, data) {
     await connectToDatabase();
@@ -33,6 +36,63 @@ export async function getUserProfile(email) {
     };
 }
 export async function checkUserExists(email) {
-  await connectToDatabase();
-  return User.findOne({ email }).select("_id");
+    await connectToDatabase();
+    return User.findOne({ email }).select("_id");
+}
+
+export async function resetPassword(token, newPassword) {
+    await connectToDatabase();
+
+    if (!token || !newPassword) {
+        throw { status: 400, message: "Missing token or password" };
+    }
+
+    const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
+
+    const user = await User.findOne({
+        passwordResetToken: hashedToken,
+        passwordResetExpires: { $gt: Date.now() },
+    });
+
+    if (!user) {
+        throw { status: 400, message: "Token invalid or expired" };
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    user.password = await bcrypt.hash(newPassword, salt);
+
+    user.passwordResetToken = undefined;
+    user.passwordResetExpires = undefined;
+
+    await user.save();
+
+    return true;
+}
+
+
+
+export async function requestPasswordReset(email) {
+    if (!email) {
+        throw { status: 400, message: "Email is required" };
+    }
+
+    await connectToDatabase();
+
+    const user = await User.findOne({ email });
+    if (!user) {
+        // Always return success to avoid revealing if email exists
+        return;
+    }
+
+    // Model instance method generates token + expiry
+    const resetToken = user.createPasswordResetToken();
+    await user.save({ validateBeforeSave: false });
+
+    const resetURL = `${process.env.NEXT_PUBLIC_BASE_URL}/reset-password?token=${resetToken}`;
+
+    await sendEmail(
+        user.email,
+        "Password Reset Request",
+        `You requested a password reset.\n\nPlease click this link to reset your password: ${resetURL}\n\nIf you did not request this, ignore this email.`
+    );
 }

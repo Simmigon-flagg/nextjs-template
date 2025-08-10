@@ -2,6 +2,13 @@
 
 import { createContext, useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
+import {
+  fetchTodos,
+  toggleFavorite,
+  createTodo,
+  updateTodo,
+  deleteTodo,
+} from "../../services/ui/todo";
 
 export const TodoContext = createContext({});
 
@@ -22,51 +29,46 @@ const TodoContextProvider = ({ children }) => {
   const [endDate, setEndDate] = useState("");
   const [selectedIds, setSelectedIds] = useState(new Set());
 
-  // Reset page on filter/search change
   useEffect(() => {
     setPage(1);
   }, [search, startDate, endDate]);
 
-  // Fetch todos with all params
-  const fetchTodos = async () => {
-    if (!session?.user?.email) {
-      setTodos([]);
-      setLoading(false);
-      return;
-    }
-    setLoading(true);
-    try {
-      const params = new URLSearchParams({
-        page,
-        limit: ITEMS_PER_PAGE,
-        search,
-        sortBy: sortConfig.key,
-        sortOrder: sortConfig.direction,
-      });
-      if (startDate) params.set("startDate", new Date(startDate + "T00:00:00").toISOString());
-      if (endDate) params.set("endDate", new Date(endDate + "T23:59:59.999").toISOString());
+const loadTodos = async () => {
+  if (!session?.user?._id) {
+    setTodos([]);
+    setLoading(false);
+    return;
+  }
+  setLoading(true);
+  try {
+    const params = {
+      userId: session.user._id.toString(),
+      page,
+      limit: ITEMS_PER_PAGE,
+      search,
+      sortBy: sortConfig.key,
+      sortOrder: sortConfig.direction,
+    };
+    if (startDate) params.startDate = new Date(startDate + "T00:00:00").toISOString();
+    if (endDate) params.endDate = new Date(endDate + "T23:59:59.999").toISOString();
 
-      const res = await fetch(`/api/todos?${params.toString()}`);
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || "Failed to fetch");
-
-      setTodos(data.todos || []);
-      setTotalPages(data.pagination?.totalPages || 1);
-      setFetchError(null);
-    } catch (err) {
-      setFetchError(err.message);
-      setTodos([]);
-      setTotalPages(1);
-    } finally {
-      setLoading(false);
-    }
-  };
+    const data = await fetchTodos(params);
+    setTodos(data.todos || []);
+    setTotalPages(data.pagination?.totalPages || 1);
+    setFetchError(null);
+  } catch (err) {
+    setFetchError(err.message);
+    setTodos([]);
+    setTotalPages(1);
+  } finally {
+    setLoading(false);
+  }
+};
 
   useEffect(() => {
-    fetchTodos();
+    loadTodos();
   }, [session?.user?.email, page, search, sortConfig, startDate, endDate]);
 
-  // Select toggle
   const toggleSelect = (id) => {
     setSelectedIds((prev) => {
       const newSet = new Set(prev);
@@ -75,21 +77,9 @@ const TodoContextProvider = ({ children }) => {
     });
   };
 
-  // Toggle favorite
-  const toggleFav = async (_id, currentFav) => {
-   
+  const toggleFav = async (_id, todo) => {
     try {
-      const res = await fetch(`/api/todos/${_id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ fav: !currentFav.fav }),
-      });
-      if (!res.ok) {
-        const errData = await res.json();
-        throw new Error(errData.message || "Failed to toggle fav");
-      }
-      const data = await res.json();
-      if (!data.updated) throw new Error("No updated todo returned from API");
+      const data = await toggleFavorite(_id, todo);
 
       setTodos((prev) =>
         prev.map((t) => (t._id === _id ? { ...t, fav: data.updated.fav } : t))
@@ -99,58 +89,43 @@ const TodoContextProvider = ({ children }) => {
     }
   };
 
-  const createTodo = async (formData) => {
-  setLoading(true);
-  try {
-    const res = await fetch("/api/todos", {
-      method: "POST",
-      body: formData, // Don't stringify, just send FormData
-      // Don't set headers, browser sets multipart boundaries
-    });
-
-    const incoming = await res.json();
-
-    if (!res.ok) {
-      console.error("Failed to create todo:", incoming.error || incoming);
-      return;
-    }
-
-    if (incoming?.todo) {
-      setPage(1); // force to first page to show the new todo
-      await fetchTodos();
-    } else {
-      console.warn("No todo returned from API:", incoming);
-    }
-  } catch (err) {
-    console.error("Error creating todo:", err);
-  } finally {
-    setLoading(false);
+  const createNewTodo = async (formData) => {
+     for (const [key, value] of formData.entries()) {
+    console.log(key, value);
   }
-};
-
-  const updateTodo = async (_id, updateData) => {
+  
+    setLoading(true);
     try {
-      const res = await fetch(`/api/todos/${_id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(updateData),
-      });
-      const incoming = await res.json();
-      setTodos((prev) =>
-        prev.map((todo) => (todo?._id === _id ? incoming.updated : todo))
-      );
-      return incoming.updated;
+      const data = await createTodo(formData);
+      if (data?.todo) {
+        setPage(1);
+        await loadTodos();
+      } else {
+        console.warn("No todo returned from API:", data);
+      }
     } catch (err) {
-      console.error("Error updating todo:", err);
+      console.error("Error creating todo:", err);
+    } finally {
+      setLoading(false);
     }
   };
 
-
-  // Delete todo
-  const deleteTodo = async (_id) => {
+  const updateExistingTodo = async (_id, updateData) => {
     try {
-      const res = await fetch(`/api/todos/${_id}`, { method: "DELETE" });
-      if (!res.ok) throw new Error("Failed to delete todo");
+      const data = await updateTodo(_id, updateData);
+      setTodos((prev) =>
+        prev.map((todo) => (todo?._id === _id ? data.updated : todo))
+      );
+      return data.updated;
+    } catch (err) {
+      console.error("Error updating todo:", err);
+      return null;
+    }
+  };
+
+  const deleteExistingTodo = async (_id) => {
+    try {
+      await deleteTodo(_id);
       setTodos((prev) => prev.filter((t) => t._id !== _id));
       setSelectedIds((prev) => {
         const newSet = new Set(prev);
@@ -172,7 +147,6 @@ const TodoContextProvider = ({ children }) => {
 
   const clearSelection = () => setSelectedIds(new Set());
 
-
   return (
     <TodoContext.Provider
       value={{
@@ -193,12 +167,12 @@ const TodoContextProvider = ({ children }) => {
         selectedIds,
         toggleSelect,
         toggleFav,
-        deleteTodo,
-        createTodo,
-        updateTodo,
+        deleteTodo: deleteExistingTodo,
+        createTodo: createNewTodo,
+        updateTodo: updateExistingTodo,
         nextPage,
         prevPage,
-        clearSelection
+        clearSelection,
       }}
     >
       {children}

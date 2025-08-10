@@ -1,8 +1,8 @@
 import mongoose from "mongoose";
 import { GridFSBucket } from "mongodb";
 import { Readable } from "stream";
-import User from "@/models/user";
-import Todo from "@/models/todo";
+import User from "../../models/user";
+import Todo from "../../models/todo";
 
 export async function findUserByEmail(email) {
     return User.findOne({ email }).select("_id todos");
@@ -50,48 +50,49 @@ export async function addTodoToUser(user, todoId) {
     await user.save();
 }
 
-export async function getTodosByUser(userId, filters, pagination, sortConfig) {
-    const query = { userId };
+export async function getTodosByUser(userId, filters = {}, pagination = {}, sortConfig = {}) {
+  const query = { userId };
 
-    // Filters (search, date range, completed, fav)
-    if (filters.search) {
-        query.title = { $regex: filters.search.trim(), $options: "i" };
+  // Filters (search, date range, completed, fav)
+  if (filters.search) {
+    query.title = { $regex: filters.search.trim(), $options: "i" };
+  }
+
+  if (filters.startDate || filters.endDate) {
+    query.createdAt = {};
+    if (filters.startDate && !isNaN(new Date(filters.startDate))) {
+      query.createdAt.$gte = new Date(filters.startDate);
     }
-
-    if (filters.startDate || filters.endDate) {
-        query.createdAt = {};
-        if (filters.startDate && !isNaN(new Date(filters.startDate))) {
-            query.createdAt.$gte = new Date(filters.startDate);
-        }
-        if (filters.endDate && !isNaN(new Date(filters.endDate))) {
-            query.createdAt.$lte = new Date(filters.endDate);
-        }
+    if (filters.endDate && !isNaN(new Date(filters.endDate))) {
+      query.createdAt.$lte = new Date(filters.endDate);
     }
+  }
 
-    if (filters.completed === "true" || filters.completed === "false") {
-        query.completed = filters.completed === "true";
-    }
+  if (filters.completed === "true" || filters.completed === "false") {
+    query.completed = filters.completed === "true";
+  }
 
-    if (filters.fav === "true" || filters.fav === "false") {
-        query.fav = filters.fav === "true";
-    }
+  if (filters.fav === "true" || filters.fav === "false") {
+    query.fav = filters.fav === "true";
+  }
 
-    // Pagination
-    const skip = (pagination.page - 1) * pagination.limit;
+  // Pagination defaults
+  const page = pagination.page ?? 1;
+  const limit = pagination.limit ?? 5;
+  const skip = (page - 1) * limit;
 
-    // Sorting
-    const sortBy = sortConfig.sortBy === "date" ? "createdAt" : sortConfig.sortBy;
-    const sortOrder = sortConfig.sortOrder === "asc" ? 1 : -1;
+  // Sorting defaults
+  const sortBy = sortConfig.sortBy === "date" ? "createdAt" : sortConfig.sortBy || "createdAt";
+  const sortOrder = sortConfig.sortOrder === "asc" ? 1 : -1;
 
-    const todos = await Todo.find(query)
-        .select("title notes completed createdAt file fav")
-        .sort({ [sortBy]: sortOrder })
-        .collation(sortBy === "title" ? { locale: "en", strength: 2 } : undefined)
-        .skip(skip)
-        .limit(pagination.limit);
+  const todos = await Todo.find(query)
+    .sort({ [sortBy]: sortOrder })
+    .collation(sortBy === "title" ? { locale: "en", strength: 2 } : undefined)
+    .skip(skip)
+    .limit(limit);
 
-    const total = await Todo.countDocuments(query);
-    const totalPages = Math.ceil(total / pagination.limit);
+  const total = await Todo.countDocuments(query);
+  const totalPages = Math.ceil(total / limit);
 
-    return { todos, total, totalPages };
+  return { todos, total, totalPages };
 }

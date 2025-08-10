@@ -53,7 +53,7 @@ const CreateTodoPage = () => {
             if (uploadedFile) {
                 payload.append("file", uploadedFile);
             }
-
+ 
             await createTodo(payload);
 
             router.back();
@@ -75,7 +75,7 @@ const CreateTodoPage = () => {
                         <h3 className="text-xl font-semibold text-gray-800">Create Todo</h3>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <form className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
                             <label htmlFor="title" className="block text-gray-600 text-sm mb-1">
                                 Title <span className="text-red-600">*</span>
@@ -105,7 +105,7 @@ const CreateTodoPage = () => {
                                 placeholder="Additional notes"
                             />
                         </div>
-                    </div>
+                    </form>
 
                     <div className="pt-6 flex justify-between items-center flex-wrap gap-2">
                         {/* Left side: Back */}
@@ -143,7 +143,9 @@ const CreateTodoPage = () => {
                             </p>
 
                             {uploadedFile.type.startsWith("image/") ? (
-                                <img
+                                <Image
+                                    width={200}
+                                    height={200}
                                     src={previewURL}
                                     alt="Preview"
                                     className="max-w-xs rounded shadow border-2 border-green-700"

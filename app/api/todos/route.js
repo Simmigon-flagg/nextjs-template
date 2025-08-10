@@ -70,7 +70,6 @@ export async function POST(request) {
           title: savedTodo.title,
           notes: savedTodo.notes,
           completed: savedTodo.completed,
-          createdAt: savedTodo.createdAt,
           file: savedTodo.file,
         },
       },

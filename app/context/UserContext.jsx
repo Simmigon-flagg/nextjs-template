@@ -38,7 +38,7 @@ const UsersContextProvider = ({ children }) => {
         setUser({
           ...data,
           _id: session.user._id,
-          image: imageUrl || '/avatar.png',
+          image: imageUrl || '/profile-placeholder.jpg',
           name: data.name || 'Unknown User',
         });
       } catch (err) {
@@ -93,7 +93,7 @@ const UsersContextProvider = ({ children }) => {
 
       const data = await response.json();
      
-      return data; // expected to contain { user: {...} }
+      return data; 
     } catch (error) {
       console.error("Error updating user:", error);
       return null;

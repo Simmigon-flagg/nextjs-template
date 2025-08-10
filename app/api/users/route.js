@@ -1,20 +1,20 @@
-import User from "../../../models/user";
-import { connectToDatabase } from "../../../utils/database";
 import { NextResponse } from "next/server";
+import { checkUserExists } from "../../../services/api/user";
 
-// betterpassword
 export async function POST(request) {
+   
     try {
-        await connectToDatabase(); // Connect to the DB
-
         const { email } = await request.json();
-     
-        const userExists = await User.findOne({ email }).select("_id");
-       
-        return NextResponse.json({ userExists });
+
+        const userExists = await checkUserExists(email);
+
+        if (userExists) {
+            return NextResponse.json({ userExists }, { status: 200 });
+        } else {
+            return NextResponse.json({ userExists: null }, { status: 200 });
+        }
+
     } catch (error) {
-        
         return NextResponse.json({ error });
     }
-
 }

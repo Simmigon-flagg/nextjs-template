@@ -1,11 +1,13 @@
 import { getServerSession } from "next-auth";
-import User from "../../../../../models/user";
 import { connectToDatabase } from "../../../../../utils/database";
 import { NextResponse } from "next/server";
-import { Readable } from "stream";
+// import { Readable } from "stream";
+import { authOptions } from "../../../../../utils/authOptions";
+import { uploadImageToGridFS, getImageFileUrl, updateUserImageIdByEmail } from "../../../../../services/api/image"; // <-- use service
 
-export async function PUT(request, { params }) {
-  const session = await getServerSession();
+
+export async function PUT(request) {
+  const session = await getServerSession(authOptions);
   const email = session?.user?.email;
 
   if (!email) {
@@ -13,54 +15,22 @@ export async function PUT(request, { params }) {
   }
 
   try {
-    const { bucket } = await connectToDatabase(); // Use connectToDatabase to establish the connection
+    const { bucket } = await connectToDatabase();
     const data = await request.formData();
     const image = data.get("image");
-    const user = await User.findOne({ email });
 
-    if (!user) {
+    let imageId = null;
+    if (image) {
+      imageId = await uploadImageToGridFS(bucket, image);
+    }
+
+    const updatedUser = await updateUserImageIdByEmail(email, imageId);
+    if (!updatedUser) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    let imageId = user.imageId; // Keep existing imageId if no new image is provided
+    const imagefileUrl = imageId ? await getImageFileUrl(bucket, imageId) : null;
 
-    if (image) {
-      const buffer = Buffer.from(await image.arrayBuffer());
-
-      const stream = new Readable();
-      stream.push(buffer);
-      stream.push(null);
-
-      //  Upload image to GridFS
-      const uploadStream = bucket.openUploadStream(image.name, {
-        contentType: image.type,
-      });
-
-      stream.pipe(uploadStream);
-
-      //  Wait for image upload to complete
-      imageId = await new Promise((resolve, reject) => {
-        uploadStream.on("finish", () => resolve(uploadStream.id));
-        uploadStream.on("error", (err) => reject(err));
-      });
-    }
-
-    const updatedUser = await User.findByIdAndUpdate(
-      user._id,
-      { imageId },
-      { new: true } // Returns the updated document
-    );
-
-    let imagefileUrl = null;
-    if (updatedUser.imageId) {
-      const image = await bucket.find({ _id: updatedUser.imageId }).toArray();
-      if (image && image.length > 0) {
-        imagefileUrl = `/api/images/${image[0]._id.toString()}`; // URL to access the image
-      }
-    }
-
-    await updatedUser.save();
-   
     return NextResponse.json({
       message: "Updated User",
       user: updatedUser,
@@ -74,40 +44,24 @@ export async function PUT(request, { params }) {
 }
 
 
+// export async function GET() {
+//   const session = await getServerSession(authOptions);
+//   const user_email = session?.user?.email;
 
+//   try {
+//     const { bucket } = await connectToDatabase();
+//     const data = await User.findOne({ email: user_email });
 
-export async function GET(request, { params }) {
-  const session = await getServerSession();
-  const user_email = await session?.user?.email;
+//     if (!data) {
+//       return NextResponse.json({ error: "User not found" }, { status: 404 });
+//     }
 
-  try {
-    const { bucket } = await connectToDatabase();  // Use connectToDatabase to establish the connection
-    const { _id } = await params;
-    const data = await User.findOne({ email: user_email });
+//     const { _id, name, email, imageId } = data;
+//     const imagefileUrl = imageId ? await getImageFileUrl(bucket, imageId) : null; // <-- service handles URL
 
-    if (!data) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 });
-    }
-
-    const { name, email, imageId, children } = data;
-    let imagefileUrl = null;
-    if (imageId) {
-      const image = await bucket.find({ _id: imageId }).toArray();
-      if (image && image.length > 0) {
-        imagefileUrl = `/api/images/${image[0]._id.toString()}`;  // URL to access the image
-      }
-    }
-    const user = {
-      _id,
-      name,
-      email,
-      imagefileUrl,
-      children
-    };
-
-    return NextResponse.json(user);
-  } catch (error) {
-    console.error(error);
-    return NextResponse.json({ error });
-  }
-}
+//     return NextResponse.json({ _id, name, email, imagefileUrl });
+//   } catch (error) {
+//     console.error(error);
+//     return NextResponse.json({ error });
+//   }
+// }

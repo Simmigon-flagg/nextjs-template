@@ -1,8 +1,8 @@
 'use client';
 
 import { createContext, useState, useEffect } from 'react';
-import { useSession, signOut as nextAuthSignOut } from 'next-auth/react';
-import { getUser, updateUser, updateUserImage } from '../../services/ui/users';
+import { useSession, signIn, signOut as nextAuthSignOut } from 'next-auth/react';
+import { getUser, updateUser, updateUserImage, fetchSessionAndSetRefreshCookie, forgotPassword as forgotPasswordService, resetPassword as resetPasswordService, signup as signupService } from '../../services/ui/users';
 
 export const UsersContext = createContext({});
 
@@ -83,8 +83,53 @@ const UsersContextProvider = ({ children }) => {
     await nextAuthSignOut({ callbackUrl: '/' });
   };
 
+  const signup = async (user) => {
+    try {
+      return await signupService(user);
+    } catch (error) {
+      throw error;
+    }
+  };
+
+  const resetPassword = async (token, newPassword) => {
+    try {
+      return await resetPasswordService(token, newPassword);
+    } catch (error) {
+      throw error;
+    }
+  };
+
+
+
+  const login = async (email, password) => {
+    const response = await signIn("credentials", {
+      email,
+      password,
+      redirect: false,
+    });
+
+    if (response.error) {
+      throw new Error(response.error);
+    }
+
+    await fetchSessionAndSetRefreshCookie();
+
+    return true;
+  };
+
+  const forgotPassword = async (email) => {
+    try {
+      await forgotPasswordService(email);
+      return true;
+    } catch (error) {
+      throw error;
+    }
+  };
+
+
+
   return (
-    <UsersContext.Provider value={{ user, loading, update, setUser, updateImage, signOutUser }}>
+    <UsersContext.Provider value={{ user, loading, update, setUser, updateImage, signOutUser, resetPassword, signup, login, forgotPassword }}>
       {children}
     </UsersContext.Provider>
   );

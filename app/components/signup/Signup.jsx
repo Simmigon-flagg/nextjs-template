@@ -1,10 +1,12 @@
 "use client"
 import Link from "next/link";
-import React, { useState } from "react";
+import React, { useContext, useState } from "react";
 import { useRouter } from "next/navigation";
+import { UsersContext } from "@/app/context/UserContext";
 
 const Signup = () => {
     const router = useRouter();
+    const { signup } = useContext(UsersContext)
     const [user, setUser] = useState({
         name: "",
         email: "",
@@ -20,50 +22,17 @@ const Signup = () => {
         }));
     };
 
-    const handleSubmit = async (event) => {
-        event.preventDefault();
+    const handleSubmit = async (e) => {
+        e.preventDefault();
 
-        if (!user.email || !user.name || !user.password) {
-            setError("Please fill in all fields");
-            return;
-        } else {
-            setError("");
-        }
+        setError("");
 
         try {
-            const responseUserExists = await fetch("/api/users", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify(user),
-            });
-            const { userExists } = await responseUserExists.json();
-            if (userExists) {
-                setError("User already exists");
-                return;
-            }
-
-            const response = await fetch("/api/signup", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify(user),
-            });
-
-            if (response.ok) {
-                setUser({
-                    name: "",
-                    email: "",
-                    password: "",
-                });
-                router.push("/login");
-            } else {
-                console.error("User registration failed.");
-            }
-        } catch (error) {
-            console.error("User registration failed.", error);
+            await signup(user);
+            setUser({ name: "", email: "", password: "" });
+            router.push("/login");
+        } catch (err) {
+            setError(err.message);
         }
     };
 

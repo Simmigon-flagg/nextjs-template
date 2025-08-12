@@ -1,6 +1,6 @@
 import Users from "./../../models/user";
 import { connectToDatabase } from "../../utils/database";
-import bcrypt from "bcryptjs";
+
 
 export async function signupUser({ name, email, password }) {
     await connectToDatabase();
@@ -11,14 +11,11 @@ export async function signupUser({ name, email, password }) {
         return { error: "User already exists", status: 409 };
     }
 
-    // Hash password
-    const hashedPassword = await bcrypt.hash(password, 10);
-
     // Create user
     const user = await Users.create({
         name,
         email,
-        password: hashedPassword,
+        password,
         imageId: null,
     });
 

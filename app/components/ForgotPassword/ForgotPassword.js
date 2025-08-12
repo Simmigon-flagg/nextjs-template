@@ -1,7 +1,9 @@
 "use client";
-import { useState } from "react";
+import { UsersContext } from "@/app/context/UserContext";
+import { useContext, useState } from "react";
 
 export default function ForgotPasswordPage() {
+  const { forgotPassword } = useContext(UsersContext)
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
@@ -11,17 +13,11 @@ export default function ForgotPasswordPage() {
     setMessage("");
     setError("");
 
-    const res = await fetch("/api/forgot-password", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email }),
-    });
-
-    if (res.ok) {
+    try {
+      await forgotPassword(email);
       setMessage("If this email exists, a reset link was sent.");
-    } else {
-      const data = await res.json();
-      setError(data.message || "Error sending reset link");
+    } catch (err) {
+      setError(err.message);
     }
   };
 

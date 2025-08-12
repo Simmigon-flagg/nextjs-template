@@ -1,9 +1,9 @@
-import React from 'react'
-import CreateAccount from '../components/CreateAccount/CreateAccount'
+
+import Signup from '../components/signup/Signup'
 
 const page = () => {
   return (
-    <CreateAccount />
+    <Signup />
   )
 }
 

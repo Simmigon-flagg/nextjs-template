@@ -1,8 +1,9 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useContext } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-
+import { UsersContext } from "../../context/UserContext"
 export default function ResetPasswordPage() {
+  const { resetPassword } = useContext(UsersContext)
   const searchParams = useSearchParams();
   const router = useRouter();
   const token = searchParams.get("token");
@@ -30,25 +31,13 @@ export default function ResetPasswordPage() {
     setMessage("");
 
     try {
-      const res = await fetch("/api/reset-password", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ token, newPassword: password }),
-      });
-
-      const data = await res.json();
-
-      if (res.ok) {
-        setMessage(data.message || "Password reset successful");
-        // Redirect to login after 2 seconds
-        setTimeout(() => router.push("/login"), 2000);
-      } else {
-        setError(data.message || "Failed to reset password");
-      }
-    } catch {
-      setError("Something went wrong");
+      const data = await resetPassword(token, password);
+      setMessage(data.message || "Password reset successful");
+      setTimeout(() => router.push("/login"), 2000);
+    } catch (err) {
+      setError(err.message || "Something went wrong");
     }
-  };
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4">

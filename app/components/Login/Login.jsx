@@ -1,13 +1,14 @@
 "use client"
 import { signIn } from "next-auth/react";
-import React, { useState } from "react";
+import React, { useContext, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { UsersContext } from "@/app/context/UserContext";
 
 const Login = () => {
     const router = useRouter();
-
-    const [login, setLogin] = useState({
+    const { login } = useContext(UsersContext)
+    const [userLogin, setUserLogin] = useState({
         email: "honey@gmail.com",
         password: "123",
     });
@@ -15,7 +16,7 @@ const Login = () => {
 
     const handleChange = (event) => {
         const { name, value } = event.target;
-        setLogin((prev) => ({
+        setUserLogin((prev) => ({
             ...prev,
             [name]: value,
         }));
@@ -24,39 +25,13 @@ const Login = () => {
 
     const handleSubmit = async (event) => {
         event.preventDefault();
-        const { email, password } = login;
-        
+        setError("");
+
         try {
-            const response = await signIn("credentials", {
-                email,
-                password,
-                redirect: false,
-            });
-
-            if (response.error) {
-                setError(response.error);
-                return;
-            }
-
-            // Get session to access the refresh token
-            const sessionRes = await fetch("/api/auth/session");
-            const session = await sessionRes.json();
-
-            const refreshToken = session?.user?.refreshToken;
-
-            // Send to server to set cookie
-            if (refreshToken) {
-                await fetch("/api/auth/set-refresh-cookie", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ refreshToken }),
-                });
-            }
-
+            await login(userLogin.email, userLogin.password);
             router.replace("/todos");
         } catch (err) {
-            console.error(err);
-            setError("Something went wrong. Please try again.");
+            setError(err.message || "Something went wrong. Please try again.");
         }
     };
 
@@ -84,7 +59,7 @@ const Login = () => {
                             type="email"
                             name="email"
                             id="email"
-                            value={login.email}
+                            value={userLogin.email}
                             onChange={handleChange}
                             placeholder="Enter your email"
                             required
@@ -103,7 +78,7 @@ const Login = () => {
                             type="password"
                             name="password"
                             id="password"
-                            value={login.password}
+                            value={userLogin.password}
                             onChange={handleChange}
                             placeholder="Enter your password"
                             required
@@ -127,12 +102,12 @@ const Login = () => {
                         Login
                     </button>
                 </form>
-                    <p className="mt-4 text-sm text-gray-600">
-                        Need to register for an account?{" "}
-                        <Link href="/createaccount" className="text-indigo-600 hover:underline">
-                            Create Account
-                        </Link>
-                    </p>
+                <p className="mt-4 text-sm text-gray-600">
+                    Need to register for an account?{" "}
+                    <Link href="/createaccount" className="text-indigo-600 hover:underline">
+                        Create Account
+                    </Link>
+                </p>
 
             </div>
         </div>

@@ -35,43 +35,49 @@ export async function getUserProfile(email) {
         children: user.children
     };
 }
+
 export async function checkUserExists(email) {
     await connectToDatabase();
     return User.findOne({ email }).select("_id");
 }
 
 export async function resetPassword(token, newPassword) {
-    await connectToDatabase();
+  await connectToDatabase();
 
-    if (!token || !newPassword) {
-        throw { status: 400, message: "Missing token or password" };
-    }
+  if (!token || !newPassword) {
+    throw { status: 400, message: "Missing token or password" };
+  }
 
-    const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
+  // Clean token and hash it
+  token = token.trim().replace(/\s/g, "");
+  const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
 
-    const user = await User.findOne({
-        passwordResetToken: hashedToken,
-        passwordResetExpires: { $gt: Date.now() },
-    });
+  // Find user with valid token
+  const user = await User.findOne({
+    passwordResetToken: hashedToken,
+    passwordResetExpires: { $gt: Date.now() },
+  });
 
-    if (!user) {
-        throw { status: 400, message: "Token invalid or expired" };
-    }
+  if (!user) {
+    throw { status: 400, message: "Token invalid or expired" };
+  }
 
-    const salt = await bcrypt.genSalt(10);
-    user.password = await bcrypt.hash(newPassword, salt);
+  // Just set plain password; pre-save hook will hash it
+  user.password = newPassword;
 
-    user.passwordResetToken = undefined;
-    user.passwordResetExpires = undefined;
+  // Clear reset token fields
+  user.passwordResetToken = undefined;
+  user.passwordResetExpires = undefined;
 
-    await user.save();
+  await user.save();
 
-    return true;
+  return true;
 }
 
 
 
 export async function requestPasswordReset(email) {
+    
     if (!email) {
         throw { status: 400, message: "Email is required" };
     }

@@ -6,9 +6,7 @@ export async function fetchTodos(params) {
   return res.json();
 }
 
-
 export async function createTodo(todoData) {
-
   const res = await fetch(`/api/todos`, {
     method: "POST",
     body: todoData,
@@ -35,8 +33,7 @@ export async function deleteTodo(todoId) {
   return res.json();
 }
 
-export async function toggleFavorite(todoId, todo) {
-    
+export async function toggleFavorite(todoId, todo) {   
   const res = await fetch(`/api/todos/${todoId}`, {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
@@ -44,4 +41,36 @@ export async function toggleFavorite(todoId, todo) {
   });
   if (!res.ok) throw new Error("Failed to toggle favorite");
   return res.json();
+}
+
+export async function saveUploadedFileService(todoId, file) {
+  if (!file) return { success: false, error: "No file provided" };
+
+  try {
+    const formDataToSend = new FormData();
+    formDataToSend.append("file", file);
+
+    // Upload file
+    const res = await fetch(`/api/todos/${todoId}/upload`, {
+      method: "POST",
+      body: formDataToSend,
+    });
+
+    if (!res.ok) {
+      const error = await res.json();
+      console.error("Upload error:", error);
+      return { success: false, error };
+    }
+
+    // Fetch updated todo
+    const updatedRes = await fetch(`/api/todos/${todoId}`);
+    if (!updatedRes.ok) throw new Error("Failed to fetch updated todo");
+
+    const updatedTodoData = await updatedRes.json();
+
+    return { success: true, todo: updatedTodoData.todo };
+  } catch (err) {
+    console.error("Error uploading file:", err);
+    return { success: false, error: err };
+  }
 }

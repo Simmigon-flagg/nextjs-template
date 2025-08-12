@@ -2,7 +2,7 @@
 import { useState } from "react";
 
 export default function ForgotPasswordPage() {
-  const [email, setEmail] = useState("honey@gmail.com");
+  const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
 

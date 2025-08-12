@@ -2,7 +2,7 @@
 
 import { createContext, useState, useEffect } from 'react';
 import { useSession, signOut as nextAuthSignOut } from 'next-auth/react';
-import { getUser, updateUser, updateUserImage } from '../../services/ui/user';
+import { getUser, updateUser, updateUserImage } from '../../services/ui/users';
 
 export const UsersContext = createContext({});
 

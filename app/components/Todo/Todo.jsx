@@ -8,7 +8,7 @@ import Image from "next/image";
 
 const Todo = ({ _id }) => {
     const router = useRouter();
-    const { todos, updateTodo, setTodos } = useContext(TodoContext);
+    const { todos, updateTodo, setTodos, saveUploadedFile } = useContext(TodoContext);
     const [todo, setTodo] = useState(null);
     const [formData, setFormData] = useState({ title: "", notes: "" });
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -25,9 +25,9 @@ const Todo = ({ _id }) => {
     }, [previewURL]);
 
     useEffect(() => {
-        
+
         const found = todos.find((item) => item._id === _id);
-       
+
         if (found) {
             setTodo(found);
         }
@@ -60,34 +60,10 @@ const Todo = ({ _id }) => {
         setIsEditModalOpen(false);
     };
 
-    const saveUploadedFile = async () => {
-        if (!uploadedFile) return;
-
-        const formDataToSend = new FormData();
-        formDataToSend.append("file", uploadedFile);
-
-        const res = await fetch(`/api/todos/${todo._id}/upload`, {
-            method: "POST",
-            body: formDataToSend,
-        });
-
-        if (!res.ok) {
-            const error = await res.json();
-            console.error("Upload error:", error);
-        } else {
-            const result = await res.json();
-   
-            const updatedRes = await fetch(`/api/todos/${todo._id}`);
-            if (updatedRes.ok) {
-                const updatedTodo = await updatedRes.json();
-
-                setTodo(updatedTodo.todo);
-                setTodos((prev) =>
-                    prev.map((item) => (item._id === updatedTodo.todo._id ? updatedTodo.todo : item))
-                );
-            }
-
-            // Reset preview and file input
+    const handleUpload = async () => {
+        const result = await saveUploadedFile(todo._id, uploadedFile);
+        if (result.success) {
+            setTodo(result.todo);
             setUploadedFile(null);
             setPreviewURL(null);
         }
@@ -100,7 +76,6 @@ const Todo = ({ _id }) => {
         setUploadedFile(file);
         setPreviewURL(URL.createObjectURL(file));
     };
-
 
     return (
         <section className="min-h-screen bg-gradient-to-b from-white to-gray-100 py-20 px-6">
@@ -155,7 +130,7 @@ const Todo = ({ _id }) => {
                             <input
                                 id="file-upload"
                                 type="file"
-                                accept="image/*,.pdf,.doc,.docx,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                                accept="image/*,.png,.pdf,.doc,.docx,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
                                 style={{ display: "none" }}
                                 onChange={handleFileUpload}
                             />
@@ -192,7 +167,7 @@ const Todo = ({ _id }) => {
                             {/* Save button */}
                             <div>
                                 <button
-                                    onClick={saveUploadedFile}
+                                    onClick={handleUpload}
                                     className="mt-2 px-4 py-1.5 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 transition"
                                 >
                                     Save Upload

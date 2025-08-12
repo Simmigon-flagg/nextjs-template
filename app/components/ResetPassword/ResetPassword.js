@@ -1,10 +1,10 @@
 "use client";
 import { useState, useEffect } from "react";
-import { useSearchParams } from "next/navigation";
-import Link from "next/link";
+import { useSearchParams, useRouter } from "next/navigation";
 
 export default function ResetPasswordPage() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const token = searchParams.get("token");
 
   const [password, setPassword] = useState("");
@@ -20,10 +20,12 @@ export default function ResetPasswordPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
     if (password !== confirmPassword) {
       setError("Passwords do not match");
       return;
     }
+
     setError("");
     setMessage("");
 
@@ -35,12 +37,15 @@ export default function ResetPasswordPage() {
       });
 
       const data = await res.json();
+
       if (res.ok) {
         setMessage(data.message || "Password reset successful");
+        // Redirect to login after 2 seconds
+        setTimeout(() => router.push("/login"), 2000);
       } else {
         setError(data.message || "Failed to reset password");
       }
-    } catch (err) {
+    } catch {
       setError("Something went wrong");
     }
   };
@@ -80,15 +85,13 @@ export default function ResetPasswordPage() {
               className="w-full px-4 py-2 mt-1 border rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-black"
             />
           </div>
-          <Link href={'/login'}>
           <button
             type="submit"
             disabled={!token}
             className="w-full bg-indigo-600 text-white py-2 px-4 rounded-md shadow hover:bg-indigo-700"
-            >
+          >
             Reset Password
           </button>
-            </Link>
         </form>
       </div>
     </div>

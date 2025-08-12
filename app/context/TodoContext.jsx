@@ -8,7 +8,8 @@ import {
   createTodo,
   updateTodo,
   deleteTodo,
-} from "../../services/ui/todo";
+  saveUploadedFileService
+} from "../../services/ui/todos";
 
 export const TodoContext = createContext({});
 
@@ -33,37 +34,37 @@ const TodoContextProvider = ({ children }) => {
     setPage(1);
   }, [search, startDate, endDate]);
 
-const loadTodos = async () => {
-  if (!session?.user?._id) {
-    setTodos([]);
-    setLoading(false);
-    return;
-  }
-  setLoading(true);
-  try {
-    const params = {
-      userId: session.user._id.toString(),
-      page,
-      limit: ITEMS_PER_PAGE,
-      search,
-      sortBy: sortConfig.key,
-      sortOrder: sortConfig.direction,
-    };
-    if (startDate) params.startDate = new Date(startDate + "T00:00:00").toISOString();
-    if (endDate) params.endDate = new Date(endDate + "T23:59:59.999").toISOString();
+  const loadTodos = async () => {
+    if (!session?.user?._id) {
+      setTodos([]);
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    try {
+      const params = {
+        userId: session.user._id.toString(),
+        page,
+        limit: ITEMS_PER_PAGE,
+        search,
+        sortBy: sortConfig.key,
+        sortOrder: sortConfig.direction,
+      };
+      if (startDate) params.startDate = new Date(startDate + "T00:00:00").toISOString();
+      if (endDate) params.endDate = new Date(endDate + "T23:59:59.999").toISOString();
 
-    const data = await fetchTodos(params);
-    setTodos(data.todos || []);
-    setTotalPages(data.pagination?.totalPages || 1);
-    setFetchError(null);
-  } catch (err) {
-    setFetchError(err.message);
-    setTodos([]);
-    setTotalPages(1);
-  } finally {
-    setLoading(false);
-  }
-};
+      const data = await fetchTodos(params);
+      setTodos(data.todos || []);
+      setTotalPages(data.pagination?.totalPages || 1);
+      setFetchError(null);
+    } catch (err) {
+      setFetchError(err.message);
+      setTodos([]);
+      setTotalPages(1);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     loadTodos();
@@ -90,10 +91,7 @@ const loadTodos = async () => {
   };
 
   const createNewTodo = async (formData) => {
-     for (const [key, value] of formData.entries()) {
-    console.log(key, value);
-  }
-  
+
     setLoading(true);
     try {
       const data = await createTodo(formData);
@@ -137,6 +135,21 @@ const loadTodos = async () => {
     }
   };
 
+const saveUploadedFile = async (todoId, file) => {
+  const result = await saveUploadedFileService(todoId, file);
+
+  if (result.success) {
+    setTodos((prev) =>
+      prev.map((item) =>
+        item._id === result.todo._id ? result.todo : item
+      )
+    );
+  }
+
+  return result;
+};
+
+
   // Pagination controls
   const nextPage = () => {
     if (page < totalPages) setPage(page + 1);
@@ -152,6 +165,7 @@ const loadTodos = async () => {
       value={{
         todos,
         setTodos,
+        saveUploadedFile,
         loading,
         fetchError,
         page,

@@ -4,6 +4,8 @@ import Navbar from "./components/Navbar/Navbar";
 import Providers from "./context/providers";
 import TodoContextProvider from "./context/TodoContext";
 import UsersContextProvider from "./context/UserContext";
+import AutoLogoutWatcher from "./AutoLogoutWatcher";
+import ClientWrapper from "./components/ClientWrapper/ClientWrapper";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -24,11 +26,12 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased bg-gray-100 dark:bg-gray-800`} >
+      
         <Providers>
           <UsersContextProvider>
             <TodoContextProvider>
               <Navbar />
-              {children}
+              <ClientWrapper>{children}</ClientWrapper>
             </TodoContextProvider>
           </UsersContextProvider>
         </Providers>

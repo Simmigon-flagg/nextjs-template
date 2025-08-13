@@ -2,7 +2,7 @@ import User from "../../models/user";
 import { connectToDatabase } from "../../utils/database";
 import { sendEmail } from "../../utils/sendEmail";
 import crypto from "crypto";
-import bcrypt from "bcryptjs";
+
 
 export async function updateUserByEmail(email, data) {
     await connectToDatabase();

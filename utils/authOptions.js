@@ -4,6 +4,30 @@ import bcrypt from "bcryptjs";
 import { connectToDatabase } from "./database";
 import crypto from "crypto";
 
+export async function authorizeFn(credentials) {
+  if (!credentials) throw new Error("Missing email or password");
+
+  const { email, password } = credentials;
+
+  await connectToDatabase();
+
+  const user = await User.findOne({ email });
+
+  if (!user) throw new Error("User not found");
+
+  const isValidPassword = await bcrypt.compare(password, user.password);
+  if (!isValidPassword) throw new Error("Invalid password");
+
+  const refreshToken = crypto.randomBytes(40).toString("hex");
+  user.refreshToken = refreshToken;
+  await user.save();
+
+  return {
+    id: user._id.toString(),
+    email: user.email,
+  };
+}
+
 export const authOptions = {
   providers: [
     CredentialsProvider({
@@ -12,31 +36,7 @@ export const authOptions = {
         email: { label: "Email", type: "text" },
         password: { label: "Password", type: "password" },
       },
-      async authorize(credentials) {
-        if (!credentials) throw new Error("Missing email or password");
-
-        const { email, password } = credentials;
-       
-        await connectToDatabase();
-
-        const user = await User.findOne({ email });
-       
-        if (!user) throw new Error("User not found");
-        const isValidPassword = await bcrypt.compare(password, user.password);
-
-        if (!isValidPassword) throw new Error("Invalid password");
-
-        // Generate refresh token and save it in DB only (do not set cookie here)
-        const refreshToken = crypto.randomBytes(40).toString("hex");
-        user.refreshToken = refreshToken;
-        await user.save();
-
-        // Return user info without refreshToken (do not expose it)
-        return {
-          id: user._id.toString(),
-          email: user.email,
-        };
-      },
+      authorize: authorizeFn,
     }),
   ],
   callbacks: {
@@ -53,8 +53,8 @@ export const authOptions = {
   },
   session: {
     strategy: "jwt",
-    maxAge: 15 * 60,
-    updateAge: 5 * 60,
+    maxAge: 15 * 60, // 15 minutes
+    updateAge: 5 * 60, // 5 minutes
   },
   secret: process.env.NEXTAUTH_SECRET,
   pages: {

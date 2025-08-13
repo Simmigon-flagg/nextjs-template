@@ -1,4 +1,5 @@
-// Image schema and model
+import mongoose from "mongoose";
+const { Schema, model, models } = mongoose;
 const ImageSchema = new Schema({
     url: {
         type: String, // Store the image URL

@@ -1,6 +1,6 @@
 import crypto from "crypto";
-import { connectToDatabase } from "../utils/database";
-import User from "../models/user";
+import { connectToDatabase } from "../../utils/database";
+import User from "../../models/user";
 import jwt from "jsonwebtoken";
 
 

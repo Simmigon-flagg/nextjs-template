@@ -1,4 +1,5 @@
-import mongoose, { Schema, model, models } from 'mongoose';
+import mongoose from "mongoose";
+const { Schema, model, models } = mongoose;
 
 const FileSchema = new Schema({
   url: {

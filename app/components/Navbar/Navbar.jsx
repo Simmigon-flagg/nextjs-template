@@ -14,6 +14,7 @@ const Navbar = () => {
   const toggleMenu = () => setMenuOpen(!menuOpen);
   const closeMenu = () => setMenuOpen(false);
   const toggleDropdown = () => setDropdownOpen(!dropdownOpen);
+
   const logout = async () => {
     closeMenu();
     setDropdownOpen(false);
@@ -29,6 +30,8 @@ const Navbar = () => {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  const profileImage = user?.imagefileUrl || user?.image;
 
   return (
     <header className="bg-indigo-700 text-white shadow relative z-50">
@@ -67,12 +70,12 @@ const Navbar = () => {
             )}
           </ul>
 
-          {user?.imagefileUrl && (
+          {profileImage && (
             <div className="relative ml-4" ref={dropdownRef}>
               <button onClick={toggleDropdown}>
                 <div className="w-11 h-11 relative rounded-full overflow-hidden border-2 border-white">
                   <Image
-                    src={user.imagefileUrl || user.image}
+                    src={profileImage}
                     alt="Profile"
                     fill
                     sizes="44px"
@@ -120,7 +123,9 @@ const Navbar = () => {
 
       {/* Mobile Menu */}
       <div
-        className={`fixed top-0 left-0 h-full w-64 bg-indigo-800 z-40 transform transition-transform duration-300 ease-in-out md:hidden ${menuOpen ? 'translate-x-0' : '-translate-x-full'}`}
+        className={`fixed top-0 left-0 h-full w-64 bg-indigo-800 z-40 transform transition-transform duration-300 ease-in-out md:hidden ${
+          menuOpen ? 'translate-x-0' : '-translate-x-full'
+        }`}
       >
         <div className="p-6 space-y-6 text-sm font-medium">
           <button
@@ -130,13 +135,13 @@ const Navbar = () => {
             ✕
           </button>
 
-          {user?.imagefileUrl && (
+          {profileImage && (
             <>
               <Link href="/profile" onClick={closeMenu}>
                 <div className="flex items-center gap-2 pb-4">
                   <div className="w-8 h-8 relative">
                     <Image
-                      src={user.imagefileUrl}
+                      src={profileImage}
                       alt="Profile"
                       fill
                       sizes="32px"

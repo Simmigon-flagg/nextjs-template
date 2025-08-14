@@ -32,8 +32,16 @@ const UsersContextProvider = ({ children }) => {
   useEffect(() => {
     const fetchUserData = async () => {
       if (!session?.user?._id) {
-        setUser(null);
-        setLoading(false);
+        // For Google users without _id in DB, use session data directly
+        if (session?.user?.email) {
+          setUser({
+            _id: session.user._id || null,
+            name: session.user.name,
+            email: session.user.email,
+            image: session.user.image || '/profile-placeholder.jpg',
+          });
+          setLoading(false);
+        }
         return;
       }
 
@@ -50,11 +58,19 @@ const UsersContextProvider = ({ children }) => {
         setUser({
           ...data,
           _id: session.user._id,
-          image: imageUrl || '/profile-placeholder.jpg',
-          name: data.name || 'Unknown User',
+          image: imageUrl || session.user.image || '/profile-placeholder.jpg',
+          name: data.name || session.user.name || 'Unknown User',
         });
       } catch (err) {
         console.error('Error fetching user:', err);
+
+        // fallback to session data
+        setUser({
+          _id: session.user._id || null,
+          name: session.user.name,
+          email: session.user.email,
+          image: session.user.image || '/profile-placeholder.jpg',
+        });
       } finally {
         setLoading(false);
       }

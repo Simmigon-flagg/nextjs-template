@@ -1,11 +1,11 @@
-import CredentialsProvider from "next-auth/providers/credentials";
-import User from "../models/user";
-import bcrypt from "bcryptjs";
-import { connectToDatabase } from "./database";
-import crypto from "crypto";
+import CredentialsProvider from 'next-auth/providers/credentials';
+import User from '../models/user';
+import bcrypt from 'bcryptjs';
+import { connectToDatabase } from './database';
+import crypto from 'crypto';
 
 export async function authorizeFn(credentials) {
-  if (!credentials) throw new Error("Missing email or password");
+  if (!credentials) throw new Error('Missing email or password');
 
   const { email, password } = credentials;
 
@@ -13,12 +13,12 @@ export async function authorizeFn(credentials) {
 
   const user = await User.findOne({ email });
 
-  if (!user) throw new Error("User not found");
+  if (!user) throw new Error('User not found');
 
   const isValidPassword = await bcrypt.compare(password, user.password);
-  if (!isValidPassword) throw new Error("Invalid password");
+  if (!isValidPassword) throw new Error('Invalid password');
 
-  const refreshToken = crypto.randomBytes(40).toString("hex");
+  const refreshToken = crypto.randomBytes(40).toString('hex');
   user.refreshToken = refreshToken;
   await user.save();
 
@@ -31,10 +31,10 @@ export async function authorizeFn(credentials) {
 export const authOptions = {
   providers: [
     CredentialsProvider({
-      name: "credentials",
+      name: 'credentials',
       credentials: {
-        email: { label: "Email", type: "text" },
-        password: { label: "Password", type: "password" },
+        email: { label: 'Email', type: 'text' },
+        password: { label: 'Password', type: 'password' },
       },
       authorize: authorizeFn,
     }),
@@ -52,12 +52,12 @@ export const authOptions = {
     },
   },
   session: {
-    strategy: "jwt",   
-    maxAge: 24 * 60 * 60, // 1 day in seconds
-    updateAge: 12 * 60 * 60 // 12 hours in seconds
+    strategy: 'jwt',
+    maxAge: 24 * 60 * 60,
+    updateAge: 12 * 60 * 60,
   },
   secret: process.env.NEXTAUTH_SECRET,
   pages: {
-    signIn: "/login",
+    signIn: '/login',
   },
 };

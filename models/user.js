@@ -1,29 +1,28 @@
-import crypto from "crypto";
-import bcrypt from "bcryptjs";
-import mongoose from "mongoose";
+import crypto from 'crypto';
+import bcrypt from 'bcryptjs';
+import mongoose from 'mongoose';
 const { Schema, model, models } = mongoose;
-
 
 const UserSchema = new Schema(
   {
     email: {
       type: String,
-      unique: [true, "Email already exists"],
-      required: [true, "Email is required"],
+      unique: [true, 'Email already exists'],
+      required: [true, 'Email is required'],
     },
     name: String,
     imageId: {
       type: Schema.Types.ObjectId,
-      ref: "uploads.files",
+      ref: 'uploads.files',
     },
     password: {
       type: String,
-      required: [true, "Password is required"],
+      required: [true, 'Password is required'],
     },
     todos: [
       {
         type: Schema.Types.ObjectId,
-        ref: "Todo",
+        ref: 'Todo',
       },
     ],
     refreshToken: String,
@@ -34,25 +33,25 @@ const UserSchema = new Schema(
 );
 
 // Hash password only if it's changed
-UserSchema.pre("save", async function (next) {
-  if (!this.isModified("password")) return next();
+UserSchema.pre('save', async function (next) {
+  if (!this.isModified('password')) return next();
   const salt = await bcrypt.genSalt(10);
   this.password = await bcrypt.hash(this.password, salt);
   next();
 });
 
 UserSchema.methods.createPasswordResetToken = function () {
-  const resetToken = crypto.randomBytes(32).toString("hex");
+  const resetToken = crypto.randomBytes(32).toString('hex');
 
   this.passwordResetToken = crypto
-    .createHash("sha256")
+    .createHash('sha256')
     .update(resetToken)
-    .digest("hex");
+    .digest('hex');
 
   this.passwordResetExpires = Date.now() + 10 * 60 * 1000; // 10 minutes
 
   return resetToken;
 };
 
-const User = models.User || model("User", UserSchema);
+const User = models.User || model('User', UserSchema);
 export default User;

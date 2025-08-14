@@ -1,6 +1,6 @@
-import { Readable } from "stream";
-import { connectToDatabase } from "../../utils/database"; // adjust relative path as needed
-import User from "../../models/user";                     // adjust relative path as needed
+import { Readable } from 'stream';
+import { connectToDatabase } from '../../utils/database'; // adjust relative path as needed
+import User from '../../models/user'; // adjust relative path as needed
 
 export async function uploadImageToGridFS(bucket, file) {
   const buffer = Buffer.from(await file.arrayBuffer());
@@ -15,8 +15,8 @@ export async function uploadImageToGridFS(bucket, file) {
   stream.pipe(uploadStream);
 
   return new Promise((resolve, reject) => {
-    uploadStream.on("finish", () => resolve(uploadStream.id));
-    uploadStream.on("error", reject);
+    uploadStream.on('finish', () => resolve(uploadStream.id));
+    uploadStream.on('error', reject);
   });
 }
 
@@ -30,9 +30,5 @@ export async function getImageFileUrl(bucket, imageId) {
 
 export async function updateUserImageIdByEmail(email, imageId) {
   await connectToDatabase();
-  return User.findOneAndUpdate(
-    { email },
-    { imageId },
-    { new: true }
-  );
+  return User.findOneAndUpdate({ email }, { imageId }, { new: true });
 }

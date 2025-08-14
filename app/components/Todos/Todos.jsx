@@ -1,16 +1,16 @@
-"use client";
+'use client';
 
-import { useContext, useState, useEffect, useCallback, Suspense } from "react";
-import dynamic from "next/dynamic";
-import Link from "next/link";
-import { TodoContext } from "@/app/context/TodoContext";
+import { useContext, useState, useEffect, useCallback, Suspense } from 'react';
+import dynamic from 'next/dynamic';
+import Link from 'next/link';
+import { TodoContext } from '@/app/context/TodoContext';
 
-
-
-const Filters = dynamic(() => import("../Filters"), { suspense: true });
-const SortDropdown = dynamic(() => import("../SortDropdown"), { suspense: true });
-const List = dynamic(() => import("../List"), { suspense: true });
-const BulkActions = dynamic(() => import("../BulkActions"), { suspense: true });
+const Filters = dynamic(() => import('../Filters'), { suspense: true });
+const SortDropdown = dynamic(() => import('../SortDropdown'), {
+  suspense: true,
+});
+const List = dynamic(() => import('../List'), { suspense: true });
+const BulkActions = dynamic(() => import('../BulkActions'), { suspense: true });
 
 function useDebounced(value, delay) {
   const [debouncedValue, setDebouncedValue] = useState(value);
@@ -57,7 +57,10 @@ export default function Todos() {
     <div className="min-h-screen bg-gradient-to-b from-white to-gray-100 py-20 px-6">
       <div className="max-w-4xl mx-auto space-y-6 text-black">
         <div className="flex justify-end mb-4">
-          <Link href={`/createtodo`} className="px-4 py-2 bg-indigo-600 text-white rounded shadow hover:bg-indigo-700 transition">
+          <Link
+            href={`/createtodo`}
+            className="px-4 py-2 bg-indigo-600 text-white rounded shadow hover:bg-indigo-700 transition"
+          >
             Create +
           </Link>
         </div>
@@ -78,11 +81,16 @@ export default function Todos() {
         <Suspense fallback={<div>Loading sort options...</div>}>
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 text-black">
             <label className="text-sm font-semibold">Sort by:</label>
-            <SortDropdown sortConfig={sortConfig} setSortConfig={setSortConfig} />
+            <SortDropdown
+              sortConfig={sortConfig}
+              setSortConfig={setSortConfig}
+            />
           </div>
         </Suspense>
 
-        {fetchError && <p className="text-sm text-red-600">{`Error: ${fetchError}`}</p>}
+        {fetchError && (
+          <p className="text-sm text-red-600">{`Error: ${fetchError}`}</p>
+        )}
 
         {loading ? (
           <p className="text-center text-black">Loading...</p>

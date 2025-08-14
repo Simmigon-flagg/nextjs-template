@@ -1,23 +1,29 @@
-import { getServerSession } from "next-auth";
-import { connectToDatabase } from "../../../../../utils/database";
-import { NextResponse } from "next/server";
+import { getServerSession } from 'next-auth';
+import { connectToDatabase } from '../../../../../utils/database';
+import { NextResponse } from 'next/server';
 // import { Readable } from "stream";
-import { authOptions } from "../../../../../utils/authOptions";
-import { uploadImageToGridFS, getImageFileUrl, updateUserImageIdByEmail } from "../../../../../services/api/image"; // <-- use service
-
+import { authOptions } from '../../../../../utils/authOptions';
+import {
+  uploadImageToGridFS,
+  getImageFileUrl,
+  updateUserImageIdByEmail,
+} from '../../../../../services/api/image'; // <-- use service
 
 export async function PUT(request) {
   const session = await getServerSession(authOptions);
   const email = session?.user?.email;
 
   if (!email) {
-    return NextResponse.json({ error: "User not authenticated" }, { status: 401 });
+    return NextResponse.json(
+      { error: 'User not authenticated' },
+      { status: 401 }
+    );
   }
 
   try {
     const { bucket } = await connectToDatabase();
     const data = await request.formData();
-    const image = data.get("image");
+    const image = data.get('image');
 
     let imageId = null;
     if (image) {
@@ -26,23 +32,24 @@ export async function PUT(request) {
 
     const updatedUser = await updateUserImageIdByEmail(email, imageId);
     if (!updatedUser) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
-    const imagefileUrl = imageId ? await getImageFileUrl(bucket, imageId) : null;
+    const imagefileUrl = imageId
+      ? await getImageFileUrl(bucket, imageId)
+      : null;
 
     return NextResponse.json({
-      message: "Updated User",
+      message: 'Updated User',
       user: updatedUser,
       imagefileUrl,
       status: 201,
     });
   } catch (error) {
-    console.error("Error updating user:", error);
+    console.error('Error updating user:', error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
-
 
 // export async function GET() {
 //   const session = await getServerSession(authOptions);

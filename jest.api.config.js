@@ -1,25 +1,11 @@
-const nextJest = require('next/jest');
-const path = require('path');
-const dotenv = require('dotenv');
-
-// Load env variables for test environment
-dotenv.config({ path: './.env.test' });
-
-const createJestConfig = nextJest({
-  dir: './',
-});
-
-const customJestConfig = {
+module.exports = {
   testEnvironment: 'node',
-  moduleDirectories: ['node_modules', '<rootDir>/'],
-  testMatch: ['**/?(*.)+(test).[jt]s?(x)'],
-  moduleFileExtensions: ['js', 'mjs', 'cjs', 'jsx', 'ts', 'tsx', 'json', 'node'],
-  globalSetup: './jest-mongodb-setup.js',
-  globalTeardown: './jest-mongodb-teardown.js',
-  transformIgnorePatterns: ["/node_modules/(?!mongoose)/"]
-
-
+  setupFilesAfterEnv: ['<rootDir>/jest.setup.api.js'],
+  transform: {
+    '^.+\\.[jt]sx?$': 'babel-jest', // handles js, jsx, ts, tsx
+  },
+  testMatch: ['**/__tests__/api/**/*.test.{js,ts}'],
+  transformIgnorePatterns: [
+    '/node_modules/(?!(bson|mongodb|mongoose)/)', // transpile ESM packages
+  ],
 };
-
-
-module.exports = createJestConfig(customJestConfig);

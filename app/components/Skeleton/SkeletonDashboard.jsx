@@ -1,8 +1,6 @@
-
-
 const SkeletonDashboard = () => {
   return (
-      <section className="py-20 px-6 animate-pulse bg-gray-50">
+    <section className="py-20 px-6 animate-pulse bg-gray-50">
       <div className="max-w-7xl mx-auto space-y-6">
         <div className="h-8 bg-gray-300 w-40 rounded"></div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -15,7 +13,7 @@ const SkeletonDashboard = () => {
         </div>
       </div>
     </section>
-  )
-}
+  );
+};
 
-export default SkeletonDashboard
+export default SkeletonDashboard;

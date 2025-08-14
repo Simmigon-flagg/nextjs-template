@@ -1,16 +1,17 @@
 // __tests__/authToken.test.js
 import crypto from 'crypto';
 import jwt from 'jsonwebtoken';
-import * as db from '../../../utils/database';
-import User from '../../../models/user'; // mock this model
+
+import * as db from '../../../../utils/database';
+import User from '../../../../models/user'; // mock this model
 
 import {
   generateAndStoreRefreshToken,
   verifyRefreshTokenAndGenerateAccessToken,
-} from '../../../services/api/auth';
+} from '../../../../services/api/auth';
 
-jest.mock('../../../utils/database');
-jest.mock('../../../models/user');
+jest.mock('../../../../utils/database');
+jest.mock('../../../../models/user');
 jest.mock('jsonwebtoken');
 
 describe('Auth token functions', () => {
@@ -47,7 +48,8 @@ describe('Auth token functions', () => {
     it('returns null if user not found by refresh token', async () => {
       User.findOne.mockResolvedValue(null);
 
-      const result = await verifyRefreshTokenAndGenerateAccessToken('invalidtoken');
+      const result =
+        await verifyRefreshTokenAndGenerateAccessToken('invalidtoken');
       expect(result).toBeNull();
       expect(db.connectToDatabase).toHaveBeenCalled();
     });
@@ -60,7 +62,8 @@ describe('Auth token functions', () => {
       User.findOne.mockResolvedValue(mockUser);
       jwt.sign.mockReturnValue('mockedAccessToken');
 
-      const token = await verifyRefreshTokenAndGenerateAccessToken('validtoken');
+      const token =
+        await verifyRefreshTokenAndGenerateAccessToken('validtoken');
 
       expect(jwt.sign).toHaveBeenCalledWith(
         { userId: mockUser._id, email: mockUser.email },

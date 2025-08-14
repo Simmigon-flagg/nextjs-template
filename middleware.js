@@ -1,10 +1,5 @@
-export { default } from "next-auth/middleware";
+export { default } from 'next-auth/middleware';
 
 export const config = {
-  matcher: [
-    "/profile",
-    "/todos",
-    "/todos/:path*",  
-    "/createtodo"
-  ],
+  matcher: ['/profile', '/todos', '/todos/:path*', '/createtodo'],
 };

@@ -1,8 +1,20 @@
 'use client';
 
 import { createContext, useState, useEffect } from 'react';
-import { useSession, signIn, signOut as nextAuthSignOut } from 'next-auth/react';
-import { getUser, updateUser, updateUserImage, fetchSessionAndSetRefreshCookie, forgotPassword as forgotPasswordService, resetPassword as resetPasswordService, signup as signupService } from '../../services/ui/users';
+import {
+  useSession,
+  signIn,
+  signOut as nextAuthSignOut,
+} from 'next-auth/react';
+import {
+  getUser,
+  updateUser,
+  updateUserImage,
+  fetchSessionAndSetRefreshCookie,
+  forgotPassword as forgotPasswordService,
+  resetPassword as resetPasswordService,
+  signup as signupService,
+} from '../../services/ui/users';
 
 export const UsersContext = createContext({});
 
@@ -63,7 +75,7 @@ const UsersContextProvider = ({ children }) => {
         }
       }
     } catch (error) {
-      console.error("Error updating user image:", error);
+      console.error('Error updating user image:', error);
     }
   };
 
@@ -72,7 +84,7 @@ const UsersContextProvider = ({ children }) => {
       const data = await updateUser(_id, updatedData);
       return data;
     } catch (error) {
-      console.error("Error updating user:", error);
+      console.error('Error updating user:', error);
       return null;
     }
   };
@@ -83,7 +95,7 @@ const UsersContextProvider = ({ children }) => {
     await nextAuthSignOut({ callbackUrl: '/' });
   };
 
-  const signup = async (user) => {
+  const signup = async user => {
     try {
       return await signupService(user);
     } catch (error) {
@@ -99,10 +111,8 @@ const UsersContextProvider = ({ children }) => {
     }
   };
 
-
-
   const login = async (email, password) => {
-    const response = await signIn("credentials", {
+    const response = await signIn('credentials', {
       email,
       password,
       redirect: false,
@@ -117,7 +127,7 @@ const UsersContextProvider = ({ children }) => {
     return true;
   };
 
-  const forgotPassword = async (email) => {
+  const forgotPassword = async email => {
     try {
       await forgotPasswordService(email);
       return true;
@@ -126,10 +136,21 @@ const UsersContextProvider = ({ children }) => {
     }
   };
 
-
-
   return (
-    <UsersContext.Provider value={{ user, loading, update, setUser, updateImage, signOutUser, resetPassword, signup, login, forgotPassword }}>
+    <UsersContext.Provider
+      value={{
+        user,
+        loading,
+        update,
+        setUser,
+        updateImage,
+        signOutUser,
+        resetPassword,
+        signup,
+        login,
+        forgotPassword,
+      }}
+    >
       {children}
     </UsersContext.Provider>
   );

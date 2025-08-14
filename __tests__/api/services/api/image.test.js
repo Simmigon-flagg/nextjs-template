@@ -3,24 +3,26 @@ import {
   uploadImageToGridFS,
   getImageFileUrl,
   updateUserImageIdByEmail,
-} from "../../../services/api/image";
+} from '../../../../services/api/image';
 
-import User from "../../../models/user";
+import User from '../../../../models/user';
 
 // Mock database connection
-jest.mock("../../../utils/database", () => ({
+jest.mock('../../../../utils/database', () => ({
   connectToDatabase: jest.fn().mockResolvedValue(),
 }));
 
-jest.mock("../../../models/user");
+jest.mock('../../../../models/user');
 
-describe("Image service functions", () => {
-  describe("getImageFileUrl", () => {
-    it("returns file URL if image found", async () => {
-      const imageId = "someid";
+describe('Image service functions', () => {
+  describe('getImageFileUrl', () => {
+    it('returns file URL if image found', async () => {
+      const imageId = 'someid';
       const mockBucket = {
         find: jest.fn(() => ({
-          toArray: jest.fn().mockResolvedValue([{ _id: { toString: () => imageId } }]),
+          toArray: jest
+            .fn()
+            .mockResolvedValue([{ _id: { toString: () => imageId } }]),
         })),
       };
 
@@ -30,23 +32,23 @@ describe("Image service functions", () => {
       expect(url).toBe(`/api/images/${imageId}`);
     });
 
-    it("returns null if no image found", async () => {
+    it('returns null if no image found', async () => {
       const mockBucket = {
         find: jest.fn(() => ({
           toArray: jest.fn().mockResolvedValue([]),
         })),
       };
 
-      const url = await getImageFileUrl(mockBucket, "someid");
+      const url = await getImageFileUrl(mockBucket, 'someid');
 
       expect(url).toBeNull();
     });
   });
 
-  describe("updateUserImageIdByEmail", () => {
+  describe('updateUserImageIdByEmail', () => {
     it("updates the user's imageId and returns the updated user", async () => {
-      const mockEmail = "test@example.com";
-      const mockImageId = "imageid123";
+      const mockEmail = 'test@example.com';
+      const mockImageId = 'imageid123';
 
       const mockUpdatedUser = { email: mockEmail, imageId: mockImageId };
 
@@ -64,22 +66,22 @@ describe("Image service functions", () => {
   });
 });
 
-describe("uploadImageToGridFS", () => {
-  it("uploads file buffer to GridFS and resolves with upload id", async () => {
+describe('uploadImageToGridFS', () => {
+  it('uploads file buffer to GridFS and resolves with upload id', async () => {
     const mockFile = {
-      name: "test.png",
-      type: "image/png",
-      arrayBuffer: jest.fn().mockResolvedValue(Buffer.from("testdata")),
+      name: 'test.png',
+      type: 'image/png',
+      arrayBuffer: jest.fn().mockResolvedValue(Buffer.from('testdata')),
     };
 
     const mockUploadStream = new Writable({
       write(chunk, encoding, callback) {
         callback();
-      }
+      },
     });
-    mockUploadStream.id = "mockUploadId";
-    jest.spyOn(mockUploadStream, "on").mockImplementation((event, cb) => {
-      if (event === "finish") {
+    mockUploadStream.id = 'mockUploadId';
+    jest.spyOn(mockUploadStream, 'on').mockImplementation((event, cb) => {
+      if (event === 'finish') {
         setImmediate(cb);
       }
       return mockUploadStream;
@@ -91,10 +93,9 @@ describe("uploadImageToGridFS", () => {
 
     const uploadId = await uploadImageToGridFS(mockBucket, mockFile);
 
-    expect(mockBucket.openUploadStream).toHaveBeenCalledWith(
-      "test.png",
-      { contentType: "image/png" }
-    );
-    expect(uploadId).toBe("mockUploadId");
+    expect(mockBucket.openUploadStream).toHaveBeenCalledWith('test.png', {
+      contentType: 'image/png',
+    });
+    expect(uploadId).toBe('mockUploadId');
   });
 });

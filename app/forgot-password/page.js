@@ -1,10 +1,7 @@
-
-import ForgotPasswordPage from '../components/ForgotPassword/ForgotPassword'
+import ForgotPasswordPage from '../components/ForgotPassword/ForgotPassword';
 
 const page = () => {
-  return (
-    <ForgotPasswordPage />
-  )
-}
+  return <ForgotPasswordPage />;
+};
 
-export default page
+export default page;

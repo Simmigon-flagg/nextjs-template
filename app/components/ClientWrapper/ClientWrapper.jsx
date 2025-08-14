@@ -1,7 +1,7 @@
 // app/ClientWrapper.jsx
-"use client";
+'use client';
 
-import AutoLogoutWatcher from "../../AutoLogoutWatcher";
+import AutoLogoutWatcher from '../../AutoLogoutWatcher';
 
 export default function ClientWrapper({ children }) {
   return (

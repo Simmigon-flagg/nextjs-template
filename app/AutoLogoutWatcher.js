@@ -1,8 +1,8 @@
 // app/AutoLogoutWatcher.js
-"use client";
+'use client';
 
-import { useEffect } from "react";
-import { signOut, useSession } from "next-auth/react";
+import { useEffect } from 'react';
+import { signOut, useSession } from 'next-auth/react';
 
 export default function AutoLogoutWatcher() {
   const { data: session } = useSession();
@@ -21,7 +21,7 @@ export default function AutoLogoutWatcher() {
 
     // Timer to sign out at exact expiration
     const logoutTimer = setTimeout(() => {
-      signOut({ callbackUrl: "/login" });
+      signOut({ callbackUrl: '/login' });
     }, timeUntilExpiry);
 
     return () => clearTimeout(logoutTimer);

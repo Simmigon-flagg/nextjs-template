@@ -1,10 +1,6 @@
-
-import Todos from "../components/Todos/Todos"
+import Todos from '../components/Todos/Todos';
 const page = () => {
+  return <Todos />;
+};
 
-  return (
-    <Todos />
-  )
-}
-
-export default page
+export default page;

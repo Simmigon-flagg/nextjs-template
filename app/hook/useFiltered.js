@@ -1,15 +1,18 @@
-import { useMemo } from "react";
+import { useMemo } from 'react';
 
 function stripTime(date) {
   return new Date(date.getFullYear(), date.getMonth(), date.getDate());
 }
 
-export default function useFiltered(items, { query, startDate, endDate, sortConfig }) {
+export default function useFiltered(
+  items,
+  { query, startDate, endDate, sortConfig }
+) {
   return useMemo(() => {
     const q = query.toLowerCase();
 
     return items
-      .filter((item) => {
+      .filter(item => {
         const titleMatch = item.title.toLowerCase().includes(q);
 
         const dateStr = new Date(item.createdAt).toISOString().slice(0, 10);
@@ -17,7 +20,7 @@ export default function useFiltered(items, { query, startDate, endDate, sortConf
 
         return titleMatch || dateMatch;
       })
-      .filter((item) => {
+      .filter(item => {
         if (!startDate && !endDate) return true;
 
         const itemDate = stripTime(new Date(item.createdAt));
@@ -35,14 +38,14 @@ export default function useFiltered(items, { query, startDate, endDate, sortConf
         const aVal = a[sortConfig.key];
         const bVal = b[sortConfig.key];
 
-        if (sortConfig.key === "createdAt") {
-          return sortConfig.direction === "asc"
+        if (sortConfig.key === 'createdAt') {
+          return sortConfig.direction === 'asc'
             ? new Date(aVal) - new Date(bVal)
             : new Date(bVal) - new Date(aVal);
         }
 
-        if (typeof aVal === "string" && typeof bVal === "string") {
-          return sortConfig.direction === "asc"
+        if (typeof aVal === 'string' && typeof bVal === 'string') {
+          return sortConfig.direction === 'asc'
             ? aVal.localeCompare(bVal)
             : bVal.localeCompare(aVal);
         }

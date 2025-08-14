@@ -1,23 +1,23 @@
-"use client";
-import React, { useContext, useState } from "react";
-import Image from "next/image";
-import { UsersContext } from "../../context/UserContext";
-import SkeletonProfile from "../Skeleton/SkeletonProfile";
+'use client';
+import React, { useContext, useState } from 'react';
+import Image from 'next/image';
+import { UsersContext } from '../../context/UserContext';
+import SkeletonProfile from '../Skeleton/SkeletonProfile';
 
 const Profile = () => {
   const { user, updateImage, setUser, update } = useContext(UsersContext);
 
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
-  const [profileData, setProfileData] = useState({ name: user?.name || "" });
+  const [profileData, setProfileData] = useState({ name: user?.name || '' });
 
   const [selectedFile, setSelectedFile] = useState(null);
-  const [previewUrl, setPreviewUrl] = useState("");
+  const [previewUrl, setPreviewUrl] = useState('');
   const [isUploading, setIsUploading] = useState(false);
 
   if (!user) return <SkeletonProfile />;
 
-  const handleFileChange = (e) => {
+  const handleFileChange = e => {
     const file = e.target.files[0];
     if (!file) return;
 
@@ -26,9 +26,9 @@ const Profile = () => {
     setPreviewUrl(URL.createObjectURL(file));
   };
 
-  const handleChange = (e) => {
+  const handleChange = e => {
     const { name, value } = e.target;
-    setProfileData((prev) => ({ ...prev, [name]: value }));
+    setProfileData(prev => ({ ...prev, [name]: value }));
   };
 
   const handleUpload = async () => {
@@ -39,17 +39,15 @@ const Profile = () => {
 
     setIsUploading(false);
     setSelectedFile(null);
-    setPreviewUrl("");
+    setPreviewUrl('');
   };
 
   const handleSave = async () => {
     setIsUploading(true);
 
-
     const updated = await update(user._id, { name: profileData.name });
     if (updated?.user) {
-
-      setUser((prev) => ({ ...prev, name: updated.user.name }));
+      setUser(prev => ({ ...prev, name: updated.user.name }));
     }
 
     setIsUploading(false);
@@ -75,16 +73,14 @@ const Profile = () => {
               src={
                 previewUrl
                   ? previewUrl
-                  : user?.imagefileUrl || "/profile-placeholder.jpg"
+                  : user?.imagefileUrl || '/profile-placeholder.jpg'
               }
               alt="Profile Picture"
               fill
               sizes="128px"
-              priority 
+              priority
               className="rounded-full object-cover border-4 border-white"
             />
-
-
           </div>
 
           <label className="mt-2 text-sm text-indigo-100">
@@ -104,7 +100,7 @@ const Profile = () => {
               disabled={isUploading}
               className="mt-2 bg-white text-indigo-700 px-4 py-1 rounded hover:bg-indigo-100 font-semibold text-sm transition disabled:opacity-50"
             >
-              {isUploading ? "Uploading…" : "Upload Image"}
+              {isUploading ? 'Uploading…' : 'Upload Image'}
             </button>
           )}
         </div>
@@ -122,9 +118,7 @@ const Profile = () => {
               <p className="text-gray-900">{user.name}</p>
             </div>
             <div>
-              <label className="block text-gray-600 text-sm mb-1">
-                Email
-              </label>
+              <label className="block text-gray-600 text-sm mb-1">Email</label>
               <p className="text-gray-900">{user.email}</p>
             </div>
           </div>
@@ -179,7 +173,7 @@ const Profile = () => {
                 disabled={isUploading}
                 className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 disabled:opacity-50"
               >
-                {isUploading ? "Saving…" : "Save"}
+                {isUploading ? 'Saving…' : 'Save'}
               </button>
             </div>
           </div>

@@ -1,5 +1,5 @@
-import { NextResponse } from "next/server";
-import { signupUser } from "../../../services/api/signup"; // adjust path
+import { NextResponse } from 'next/server';
+import { signupUser } from '../../../services/api/signup'; // adjust path
 
 export async function POST(request) {
   try {
@@ -7,7 +7,7 @@ export async function POST(request) {
 
     if (!name || !email || !password) {
       return NextResponse.json(
-        { message: "Missing required fields" },
+        { message: 'Missing required fields' },
         { status: 400 }
       );
     }
@@ -18,9 +18,12 @@ export async function POST(request) {
       return NextResponse.json({ message: error }, { status });
     }
 
-    return NextResponse.json({ message: "User Registered", user }, { status });
+    return NextResponse.json({ message: 'User Registered', user }, { status });
   } catch (error) {
     console.error(error);
-    return NextResponse.json({ message: "An error occurred", error }, { status: 500 });
+    return NextResponse.json(
+      { message: 'An error occurred', error },
+      { status: 500 }
+    );
   }
 }

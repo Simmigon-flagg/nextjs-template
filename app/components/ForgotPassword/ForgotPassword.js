@@ -1,21 +1,21 @@
-"use client";
-import { UsersContext } from "@/app/context/UserContext";
-import { useContext, useState } from "react";
+'use client';
+import { UsersContext } from '@/app/context/UserContext';
+import { useContext, useState } from 'react';
 
 export default function ForgotPasswordPage() {
-  const { forgotPassword } = useContext(UsersContext)
-  const [email, setEmail] = useState("");
-  const [message, setMessage] = useState("");
-  const [error, setError] = useState("");
+  const { forgotPassword } = useContext(UsersContext);
+  const [email, setEmail] = useState('');
+  const [message, setMessage] = useState('');
+  const [error, setError] = useState('');
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async e => {
     e.preventDefault();
-    setMessage("");
-    setError("");
+    setMessage('');
+    setError('');
 
     try {
       await forgotPassword(email);
-      setMessage("If this email exists, a reset link was sent.");
+      setMessage('If this email exists, a reset link was sent.');
     } catch (err) {
       setError(err.message);
     }
@@ -39,7 +39,7 @@ export default function ForgotPasswordPage() {
             <input
               type="email"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={e => setEmail(e.target.value)}
               required
               className="w-full px-4 py-2 mt-1 border rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-black"
             />

@@ -1,15 +1,15 @@
-"use client";
+'use client';
 
-import { createContext, useEffect, useState } from "react";
-import { useSession } from "next-auth/react";
+import { createContext, useEffect, useState } from 'react';
+import { useSession } from 'next-auth/react';
 import {
   fetchTodos,
   toggleFavorite,
   createTodo,
   updateTodo,
   deleteTodo,
-  saveUploadedFileService
-} from "../../services/ui/todos";
+  saveUploadedFileService,
+} from '../../services/ui/todos';
 
 export const TodoContext = createContext({});
 
@@ -24,10 +24,13 @@ const TodoContextProvider = ({ children }) => {
   // Pagination & filters
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const [search, setSearch] = useState("");
-  const [sortConfig, setSortConfig] = useState({ key: "createdAt", direction: "desc" });
-  const [startDate, setStartDate] = useState("");
-  const [endDate, setEndDate] = useState("");
+  const [search, setSearch] = useState('');
+  const [sortConfig, setSortConfig] = useState({
+    key: 'createdAt',
+    direction: 'desc',
+  });
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
   const [selectedIds, setSelectedIds] = useState(new Set());
 
   useEffect(() => {
@@ -50,8 +53,10 @@ const TodoContextProvider = ({ children }) => {
         sortBy: sortConfig.key,
         sortOrder: sortConfig.direction,
       };
-      if (startDate) params.startDate = new Date(startDate + "T00:00:00").toISOString();
-      if (endDate) params.endDate = new Date(endDate + "T23:59:59.999").toISOString();
+      if (startDate)
+        params.startDate = new Date(startDate + 'T00:00:00').toISOString();
+      if (endDate)
+        params.endDate = new Date(endDate + 'T23:59:59.999').toISOString();
 
       const data = await fetchTodos(params);
       setTodos(data.todos || []);
@@ -70,8 +75,8 @@ const TodoContextProvider = ({ children }) => {
     loadTodos();
   }, [session?.user?.email, page, search, sortConfig, startDate, endDate]);
 
-  const toggleSelect = (id) => {
-    setSelectedIds((prev) => {
+  const toggleSelect = id => {
+    setSelectedIds(prev => {
       const newSet = new Set(prev);
       newSet.has(id) ? newSet.delete(id) : newSet.add(id);
       return newSet;
@@ -82,16 +87,15 @@ const TodoContextProvider = ({ children }) => {
     try {
       const data = await toggleFavorite(_id, todo);
 
-      setTodos((prev) =>
-        prev.map((t) => (t._id === _id ? { ...t, fav: data.updated.fav } : t))
+      setTodos(prev =>
+        prev.map(t => (t._id === _id ? { ...t, fav: data.updated.fav } : t))
       );
     } catch (err) {
-      console.error("Failed to toggle fav:", err);
+      console.error('Failed to toggle fav:', err);
     }
   };
 
-  const createNewTodo = async (formData) => {
-
+  const createNewTodo = async formData => {
     setLoading(true);
     try {
       const data = await createTodo(formData);
@@ -99,10 +103,10 @@ const TodoContextProvider = ({ children }) => {
         setPage(1);
         await loadTodos();
       } else {
-        console.warn("No todo returned from API:", data);
+        console.warn('No todo returned from API:', data);
       }
     } catch (err) {
-      console.error("Error creating todo:", err);
+      console.error('Error creating todo:', err);
     } finally {
       setLoading(false);
     }
@@ -111,21 +115,21 @@ const TodoContextProvider = ({ children }) => {
   const updateExistingTodo = async (_id, updateData) => {
     try {
       const data = await updateTodo(_id, updateData);
-      setTodos((prev) =>
-        prev.map((todo) => (todo?._id === _id ? data.updated : todo))
+      setTodos(prev =>
+        prev.map(todo => (todo?._id === _id ? data.updated : todo))
       );
       return data.updated;
     } catch (err) {
-      console.error("Error updating todo:", err);
+      console.error('Error updating todo:', err);
       return null;
     }
   };
 
-  const deleteExistingTodo = async (_id) => {
+  const deleteExistingTodo = async _id => {
     try {
       await deleteTodo(_id);
-      setTodos((prev) => prev.filter((t) => t._id !== _id));
-      setSelectedIds((prev) => {
+      setTodos(prev => prev.filter(t => t._id !== _id));
+      setSelectedIds(prev => {
         const newSet = new Set(prev);
         newSet.delete(_id);
         return newSet;
@@ -135,20 +139,17 @@ const TodoContextProvider = ({ children }) => {
     }
   };
 
-const saveUploadedFile = async (todoId, file) => {
-  const result = await saveUploadedFileService(todoId, file);
+  const saveUploadedFile = async (todoId, file) => {
+    const result = await saveUploadedFileService(todoId, file);
 
-  if (result.success) {
-    setTodos((prev) =>
-      prev.map((item) =>
-        item._id === result.todo._id ? result.todo : item
-      )
-    );
-  }
+    if (result.success) {
+      setTodos(prev =>
+        prev.map(item => (item._id === result.todo._id ? result.todo : item))
+      );
+    }
 
-  return result;
-};
-
+    return result;
+  };
 
   // Pagination controls
   const nextPage = () => {

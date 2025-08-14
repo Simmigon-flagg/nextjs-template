@@ -1,10 +1,7 @@
-
-import CreateTodo from '../components/CreateTodo/CreateTodo'
+import CreateTodo from '../components/CreateTodo/CreateTodo';
 
 const page = () => {
-  return (
-    <CreateTodo />
-  )
-}
+  return <CreateTodo />;
+};
 
-export default page
+export default page;

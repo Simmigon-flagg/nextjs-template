@@ -1,43 +1,43 @@
-"use client";
-import { useState, useEffect, useContext } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
-import { UsersContext } from "../../context/UserContext"
+'use client';
+import { useState, useEffect, useContext } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
+import { UsersContext } from '../../context/UserContext';
 export default function ResetPasswordPage() {
-  const { resetPassword } = useContext(UsersContext)
+  const { resetPassword } = useContext(UsersContext);
   const searchParams = useSearchParams();
   const router = useRouter();
-  const token = searchParams.get("token");
+  const token = searchParams.get('token');
 
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [message, setMessage] = useState("");
-  const [error, setError] = useState("");
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [message, setMessage] = useState('');
+  const [error, setError] = useState('');
 
   useEffect(() => {
     if (!token) {
-      setError("Invalid password reset link");
+      setError('Invalid password reset link');
     }
   }, [token]);
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async e => {
     e.preventDefault();
 
     if (password !== confirmPassword) {
-      setError("Passwords do not match");
+      setError('Passwords do not match');
       return;
     }
 
-    setError("");
-    setMessage("");
+    setError('');
+    setMessage('');
 
     try {
       const data = await resetPassword(token, password);
-      setMessage(data.message || "Password reset successful");
-      setTimeout(() => router.push("/login"), 2000);
+      setMessage(data.message || 'Password reset successful');
+      setTimeout(() => router.push('/login'), 2000);
     } catch (err) {
-      setError(err.message || "Something went wrong");
+      setError(err.message || 'Something went wrong');
     }
-  }
+  };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4">
@@ -57,7 +57,7 @@ export default function ResetPasswordPage() {
             <input
               type="password"
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={e => setPassword(e.target.value)}
               required
               className="w-full px-4 py-2 mt-1 border rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-black"
             />
@@ -69,7 +69,7 @@ export default function ResetPasswordPage() {
             <input
               type="password"
               value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
+              onChange={e => setConfirmPassword(e.target.value)}
               required
               className="w-full px-4 py-2 mt-1 border rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-black"
             />

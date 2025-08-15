@@ -16,7 +16,7 @@ export async function authorizeFn(credentials) {
   const user = await User.findOne({ email });
 
   if (!user) throw new Error('User not found');
-
+  console.log(user)
   const isValidPassword = await bcrypt.compare(password, user.password);
   if (!isValidPassword) throw new Error('Invalid password');
 
@@ -49,6 +49,7 @@ export const authOptions = {
   callbacks: {
     async jwt({ token, user, account, profile }) {
       // Credentials login
+   
       if (user) {
         token.userId = user.id;
         token.email = user.email;

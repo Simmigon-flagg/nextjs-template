@@ -8,6 +8,7 @@ import { TodoContext } from '@/app/context/TodoContext';
 const Filters = dynamic(() => import('../Filters'), { suspense: true });
 const SortDropdown = dynamic(() => import('../SortDropdown'), {
   suspense: true,
+  // ssr: false
 });
 const List = dynamic(() => import('../List'), { suspense: true });
 const BulkActions = dynamic(() => import('../BulkActions'), { suspense: true });

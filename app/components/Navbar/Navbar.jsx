@@ -37,7 +37,7 @@ const Navbar = () => {
     <header className="bg-indigo-700 text-white shadow relative z-50">
       <nav className="h-20 max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
         <Link href="/" className="text-xl font-bold">
-          YourBrand
+          Your Brand
         </Link>
 
         {/* Desktop Nav */}

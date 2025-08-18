@@ -25,7 +25,7 @@ const Login = () => {
   const handleSubmit = async event => {
     event.preventDefault();
     setError('');
-    console.log(userLogin)
+    
     try {
       await login(userLogin.email, userLogin.password);
       router.replace('/todos');

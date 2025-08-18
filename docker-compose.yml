@@ -5,16 +5,16 @@ services:
     ports:
       - "3000:3000"
     env_file:
-      - .env.test
+      - .env.local
+    volumes:
+      - .:/app          # bind mount your source code
+      - /app/node_modules  # keep container deps isolated
     depends_on:
       - mongo
 
   mongo:
     image: mongo:6
     container_name: mongo_db_template
-    environment:
-      MONGO_INITDB_ROOT_USERNAME: root
-      MONGO_INITDB_ROOT_PASSWORD: template
     ports:
       - "27017:27017"
     volumes:
@@ -22,3 +22,31 @@ services:
 
 volumes:
   mongo_data:
+
+# services:
+#   web:
+#     build: .
+#     container_name: nextjs_template
+#     ports:
+#       - "3000:3000"
+#     env_file:
+#       - .env.local
+#     volumes:
+#       - .:/app          # bind mount your source code
+#       - /app/node_modules  # keep container deps isolated
+#     depends_on:
+#       - mongo
+
+#   mongo:
+#     image: mongo:6
+#     container_name: mongo_db_template
+#     environment:
+#       MONGO_INITDB_ROOT_USERNAME: root
+#       MONGO_INITDB_ROOT_PASSWORD: template
+#     ports:
+#       - "27017:27017"
+#     volumes:
+#       - mongo_data:/data/db
+
+# volumes:
+#   mongo_data:

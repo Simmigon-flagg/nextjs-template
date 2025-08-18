@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import { ObjectId } from 'mongodb';
 
 export async function GET(request, { params }) {
+  
   try {
     const { bucket } = await connectToDatabase();
     const { _id } = await params;

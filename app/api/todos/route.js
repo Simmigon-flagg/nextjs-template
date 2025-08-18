@@ -1,7 +1,8 @@
-import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/utils/authOptions';
-import { connectToDatabase } from '@/utils/database';
+import { NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/utils/authOptions";
+import { connectToDatabase } from "@/utils/database";
+import { logEvent } from "../../../utils/logger"; // <-- add this
 
 import {
   findUserByEmail,
@@ -9,19 +10,30 @@ import {
   createTodoForUser,
   addTodoToUser,
   getTodosByUser,
-} from '@/services/api/todo';
+} from "@/services/api/todo";
+
 
 export async function POST(request) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) {
-      return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
+      await logEvent({
+        level: "warn",
+        message: "Unauthorized attempt to create todo",
+      });
+      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
 
     await connectToDatabase();
 
     const user = await findUserByEmail(session.user.email);
     if (!user) {
+      await logEvent({
+        level: "warn",
+        message: "Todo creation failed: user not found",
+        meta: { email: session.user.email },
+      
+      });
       return NextResponse.json(
         { message: `User ${session.user.email} not found` },
         { status: 404 }
@@ -29,24 +41,32 @@ export async function POST(request) {
     }
 
     const formData = await request.formData();
-    const title = formData.get('title');
-    const notes = formData.get('notes');
-    const file = formData.get('file');
+    const title = formData.get("title");
+    const notes = formData.get("notes");
+    const file = formData.get("file");
 
-    if (!title || typeof title !== 'string') {
-      return NextResponse.json(
-        { message: 'Title is required' },
-        { status: 400 }
-      );
+    if (!title || typeof title !== "string") {
+      await logEvent({
+        level: "warn",
+        message: "Todo creation failed: missing title",
+        userId: user._id,
+      });
+      return NextResponse.json({ message: "Title is required" }, { status: 400 });
     }
 
     let fileData = null;
     if (file) {
       try {
         fileData = await uploadFileToGridFS(file);
-      } catch {
+      } catch (err) {
+        await logEvent({
+          level: "error",
+          message: "File upload failed during todo creation",
+          userId: user._id,
+          meta: { error: err.message },
+        });
         return NextResponse.json(
-          { message: 'File upload failed' },
+          { message: "File upload failed" },
           { status: 500 }
         );
       }
@@ -57,11 +77,19 @@ export async function POST(request) {
       notes,
       fileData,
     });
+
     await addTodoToUser(user, savedTodo._id);
+
+    await logEvent({
+      level: "info",
+      message: "Todo created successfully",
+      userId: user._id,
+      meta: { todoId: savedTodo._id, savedTodo },
+    });
 
     return NextResponse.json(
       {
-        message: 'Todo created successfully',
+        message: "Todo created successfully",
         todo: {
           _id: savedTodo._id,
           title: savedTodo.title,
@@ -74,8 +102,13 @@ export async function POST(request) {
     );
   } catch (error) {
     console.error(error);
+    await logEvent({
+      level: "error",
+      message: "Unexpected error creating todo",
+      meta: { error: error.message },
+    });
     return NextResponse.json(
-      { message: 'Error creating Todo', error: error.message },
+      { message: "Error creating Todo", error: error.message },
       { status: 500 }
     );
   }
@@ -85,13 +118,22 @@ export async function GET(request) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) {
-      return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
+      await logEvent({
+        level: "warn",
+        message: "Unauthorized attempt to fetch todos",
+      });
+      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
 
     await connectToDatabase();
 
     const user = await findUserByEmail(session.user.email);
     if (!user) {
+      await logEvent({
+        level: "warn",
+        message: "Fetch todos failed: user not found",
+        meta: { email: session.user.email },
+      });
       return NextResponse.json(
         { message: `User ${session.user.email} not found` },
         { status: 404 }
@@ -99,15 +141,15 @@ export async function GET(request) {
     }
 
     const { searchParams } = new URL(request.url);
-    const page = parseInt(searchParams.get('page')) || 1;
-    const limit = parseInt(searchParams.get('limit')) || 5;
-    const search = searchParams.get('search') || '';
-    const startDate = searchParams.get('startDate');
-    const endDate = searchParams.get('endDate');
-    const sortBy = searchParams.get('sortBy') || 'createdAt';
-    const sortOrder = searchParams.get('sortOrder') || 'desc';
-    const completed = searchParams.get('completed');
-    const fav = searchParams.get('fav');
+    const page = parseInt(searchParams.get("page")) || 1;
+    const limit = parseInt(searchParams.get("limit")) || 5;
+    const search = searchParams.get("search") || "";
+    const startDate = searchParams.get("startDate");
+    const endDate = searchParams.get("endDate");
+    const sortBy = searchParams.get("sortBy") || "createdAt";
+    const sortOrder = searchParams.get("sortOrder") || "desc";
+    const completed = searchParams.get("completed");
+    const fav = searchParams.get("fav");
 
     const { todos, total, totalPages } = await getTodosByUser(
       user._id,
@@ -116,9 +158,16 @@ export async function GET(request) {
       { sortBy, sortOrder }
     );
 
+    await logEvent({
+      level: "info",
+      message: "Todos fetched successfully",
+      userId: user._id,
+      meta: { count: todos.length, page, limit },
+    });
+
     return NextResponse.json(
       {
-        message: 'Todos fetched successfully',
+        message: "Todos fetched successfully",
         todos,
         pagination: { page, limit, total, totalPages },
       },
@@ -126,8 +175,13 @@ export async function GET(request) {
     );
   } catch (error) {
     console.error(error);
+    await logEvent({
+      level: "error",
+      message: "Unexpected error fetching todos",
+      meta: { error: error.message },
+    });
     return NextResponse.json(
-      { message: 'Error fetching Todos', error: error.message },
+      { message: "Error fetching Todos", error: error.message },
       { status: 500 }
     );
   }

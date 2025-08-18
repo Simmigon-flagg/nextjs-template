@@ -74,13 +74,15 @@ export async function resetPassword(token, newPassword) {
 }
 
 export async function requestPasswordReset(email) {
+
   if (!email) {
     throw { status: 400, message: 'Email is required' };
   }
 
-  await connectToDatabase();
 
+  await connectToDatabase();
   const user = await User.findOne({ email });
+
   if (!user) {
     // Always return success to avoid revealing if email exists
     return;
@@ -88,6 +90,7 @@ export async function requestPasswordReset(email) {
 
   // Model instance method generates token + expiry
   const resetToken = user.createPasswordResetToken();
+
   await user.save({ validateBeforeSave: false });
 
   const resetURL = `${process.env.NEXT_PUBLIC_BASE_URL}/reset-password?token=${resetToken}`;

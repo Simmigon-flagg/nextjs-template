@@ -1,259 +1,178 @@
 import { connectToDatabase } from '../../../../utils/database';
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
+import { authOptions } from '@/utils/authOptions';
 import User from '../../../../models/user';
 import Todo from '../../../../models/todo';
+import { logEvent } from '../../../../utils/logger';
 
+// ----------------------
+// Helper: get user ID from session
+// ----------------------
+async function getUserIdFromSession(session) {
+  if (!session?.user?.email) return null;
+  const user = await User.findOne({ email: session.user.email }).select('_id');
+  return user?._id || null;
+}
+
+// ----------------------
+// PUT - Update Todo
+// ----------------------
 export async function PUT(request, { params }) {
-  let session = null;
-
+  let session;
   try {
-    session = await getServerSession();
+    session = await getServerSession(authOptions);
   } catch (error) {
-    return NextResponse.json(
-      { message: 'Unauthorized', error },
-      { status: 401 }
-    );
+    await logEvent({ level: 'error', message: 'Unauthorized PUT attempt', meta: { error: error.message } });
+    return NextResponse.json({ message: 'Unauthorized', error }, { status: 401 });
   }
-  const user_email = session?.user?.email;
 
-  let user = null;
   const { _id } = await params;
+  const userId = await getUserIdFromSession(session);
+
+  if (!userId) {
+    await logEvent({ level: 'error', message: 'User not found in PUT', meta: { _id } });
+    return NextResponse.json({ message: 'User not found' }, { status: 404 });
+  }
 
   let data;
   try {
     data = await request.json();
-  } catch (err) {
+  } catch {
+    await logEvent({ level: 'warn', message: 'Invalid request body', meta: { _id }, userId });
     return NextResponse.json({ message: 'Invalid data' }, { status: 400 });
   }
 
   if (!data.title) {
+    await logEvent({ level: 'warn', message: 'Missing title field', meta: { _id }, userId });
     return NextResponse.json({ message: 'Invalid data' }, { status: 400 });
   }
 
   try {
     await connectToDatabase();
-  } catch (error) {
-    return NextResponse.json(
-      { message: 'Server Error', error },
-      { status: 500 }
-    );
-  }
-
-  try {
-    user = await User.findOne({ email: user_email }).select('todos');
-
-    if (!user) {
-      return NextResponse.json({ message: `Todos not found` }, { status: 404 });
-    }
-  } catch (error) {
-    return NextResponse.json({ message: 'Database error' }, { status: 500 });
-  }
-
-  try {
     const updated = await Todo.findByIdAndUpdate(_id, data, { new: true });
 
     if (!updated) {
-      return NextResponse.json(
-        { message: `Todo with id ${_id} not found` },
-        { status: 404 }
-      );
+      await logEvent({ level: 'warn', message: 'Todo not found', meta: { _id }, userId });
+      return NextResponse.json({ message: `Todo with id ${_id} not found` }, { status: 404 });
     }
 
-    return NextResponse.json(
-      { message: `Todo updated successfully`, updated },
-      { status: 200 }
-    );
+    await logEvent({ level: 'info', message: 'Todo updated successfully', meta: { _id, data }, userId });
+    return NextResponse.json({ message: 'Todo updated successfully', updated }, { status: 200 });
   } catch (error) {
-    return NextResponse.json(
-      { message: 'Error updating Todo' },
-      { status: 500 }
-    );
+    await logEvent({ level: 'error', message: 'Error updating Todo', meta: { _id, error: error.message }, userId });
+    return NextResponse.json({ message: 'Error updating Todo' }, { status: 500 });
   }
 }
 
+// ----------------------
+// GET - Fetch Todo
+// ----------------------
 export async function GET(request, { params }) {
-  const session = await getServerSession();
-
-  if (!session) {
-    return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
-  }
-  const { _id } = await params;
-  const user_email = session.user.email;
-
-  if (!_id) {
-    return NextResponse.json({ message: 'Missing todo ID' }, { status: 400 });
-  }
-
+  let session;
   try {
-    await connectToDatabase(); // Connect to the DB
-  } catch (error) {
-    return NextResponse.json(
-      { message: 'Server Error', error },
-      { status: 500 }
-    );
-  }
-  try {
-    const user = await User.findOne({ email: user_email }).select('_id');
-    if (!user) {
-      return NextResponse.json({ message: 'User not found' }, { status: 404 });
-    }
-
-    const todo = await Todo.findById(_id);
-    if (!todo) {
-      return NextResponse.json(
-        { message: `Todo with id ${_id} not found` },
-        { status: 404 }
-      );
-    }
-
-    return NextResponse.json(
-      { message: 'Todo fetched successfully', todo },
-      { status: 200 }
-    );
-  } catch (error) {
-    return NextResponse.json(
-      { message: 'Something went wrong' },
-      { status: 500 }
-    );
-  }
-}
-
-export async function DELETE(request, { params }) {
-  const session = await getServerSession();
-  if (!session) {
+    session = await getServerSession(authOptions);
+  } catch {
+    await logEvent({ level: 'warn', message: 'Unauthorized GET attempt' });
     return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
   }
 
-  const user_email = session.user.email;
-  const { _id } = await params;
+  const { _id } = params;
+  const userId = await getUserIdFromSession(session);
 
-  if (!_id) {
-    return NextResponse.json({ message: 'Missing todo ID' }, { status: 400 });
-  }
+  if (!_id) return NextResponse.json({ message: 'Missing todo ID' }, { status: 400 });
+  if (!userId) return NextResponse.json({ message: 'User not found' }, { status: 404 });
 
   try {
     await connectToDatabase();
-  } catch (error) {
-    return NextResponse.json({ message: 'Database Error' }, { status: 500 });
-  }
+    const todo = await Todo.findById(_id);
 
-  let user;
-  try {
-    user = await User.findOne({ email: user_email }).select('todos');
-    if (!user) {
-      return NextResponse.json({ message: `User not found` }, { status: 404 });
-    }
-  } catch (error) {
-    console.error(error);
-    return NextResponse.json(
-      { message: 'Error finding user' },
-      { status: 500 }
-    );
-  }
-
-  try {
-    const deletedTodo = await Todo.findByIdAndDelete(_id);
-
-    if (!deletedTodo) {
-      return NextResponse.json({ message: 'Todo not found' }, { status: 404 });
+    if (!todo) {
+      await logEvent({ level: 'warn', message: 'Todo not found', meta: { _id }, userId });
+      return NextResponse.json({ message: `Todo with id ${_id} not found` }, { status: 404 });
     }
 
-    // Delete associated file from GridFS if it exists
-    if (deletedTodo.file && deletedTodo.file.id) {
-      try {
-        const db = mongoose.connection.db;
-        const bucket = new mongoose.mongo.GridFSBucket(db, {
-          bucketName: 'uploads',
-        });
-
-        await bucket.delete(new mongoose.Types.ObjectId(deletedTodo.file.id));
-      } catch (fileErr) {
-        console.error('Failed to delete file from GridFS:', fileErr);
-        // You can still return 200, or return 500 depending on how critical file deletion is
-      }
-    }
-
-    // Remove the todo from the user's list
-    user.todos = user.todos.filter(todoId => todoId.toString() !== _id);
-    await user.save();
-
-    return NextResponse.json(
-      { message: 'Todo and file deleted successfully' },
-      { status: 200 }
-    );
+    await logEvent({ level: 'info', message: 'Fetched todo successfully', meta: { _id }, userId });
+    return NextResponse.json({ message: 'Todo fetched successfully', todo }, { status: 200 });
   } catch (error) {
-    console.error(error);
-    return NextResponse.json(
-      { message: 'Error deleting Todo' },
-      { status: 500 }
-    );
+    await logEvent({ level: 'error', message: 'Error fetching todo', meta: { _id, error: error.message }, userId });
+    return NextResponse.json({ message: 'Something went wrong' }, { status: 500 });
   }
 }
 
-export async function PATCH(request, { params }) {
-  let session = null;
+// ----------------------
+// DELETE - Delete Todo
+// ----------------------
+export async function DELETE(request, { params }) {
+  let session;
+  try {
+    session = await getServerSession(authOptions);
+  } catch {
+    await logEvent({ level: 'warn', message: 'Unauthorized DELETE attempt' });
+    return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
+  }
+
+  const { _id } = params;
+  const userId = await getUserIdFromSession(session);
+
+  if (!_id) return NextResponse.json({ message: 'Missing todo ID' }, { status: 400 });
+  if (!userId) return NextResponse.json({ message: 'User not found' }, { status: 404 });
 
   try {
-    session = await getServerSession();
-  } catch (error) {
-    return NextResponse.json(
-      { message: 'Unauthorized', error },
-      { status: 401 }
-    );
-  }
-  const user_email = session?.user?.email;
+    await connectToDatabase();
 
-  let user = null;
-  const { _id } = await params;
+    const deletedTodo = await Todo.findByIdAndDelete(_id);
+    if (!deletedTodo) {
+      await logEvent({ level: 'warn', message: 'Todo not found', meta: { _id }, userId });
+      return NextResponse.json({ message: 'Todo not found' }, { status: 404 });
+    }
+
+    await logEvent({ level: 'info', message: 'Todo deleted successfully', meta: { _id }, userId });
+    return NextResponse.json({ message: 'Todo deleted successfully' }, { status: 200 });
+  } catch (error) {
+    await logEvent({ level: 'error', message: 'Error deleting Todo', meta: { _id, error: error.message }, userId });
+    return NextResponse.json({ message: 'Error deleting Todo' }, { status: 500 });
+  }
+}
+
+// ----------------------
+// PATCH - Partial Update
+// ----------------------
+export async function PATCH(request, { params }) {
+  let session;
+  try {
+    session = await getServerSession(authOptions);
+  } catch (error) {
+    await logEvent({ level: 'warn', message: 'Unauthorized PATCH attempt', meta: { error: error.message } });
+    return NextResponse.json({ message: 'Unauthorized', error }, { status: 401 });
+  }
+
+  const { _id } = params;
+  const userId = await getUserIdFromSession(session);
+
+  if (!userId) return NextResponse.json({ message: 'User not found' }, { status: 404 });
 
   let data;
   try {
     data = await request.json();
-  } catch (err) {
+  } catch {
+    await logEvent({ level: 'warn', message: 'Invalid request body', meta: { _id }, userId });
     return NextResponse.json({ message: 'Invalid data' }, { status: 400 });
   }
 
   try {
     await connectToDatabase();
-  } catch (error) {
-    return NextResponse.json(
-      { message: 'Server Error', error },
-      { status: 500 }
-    );
-  }
-
-  try {
-    user = await User.findOne({ email: user_email }).select('_id');
-
-    if (!user) {
-      return NextResponse.json({ message: `Todos not found` }, { status: 404 });
-    }
-  } catch (error) {
-    return NextResponse.json({ message: 'Database error' }, { status: 500 });
-  }
-
-  try {
-    // perform update
 
     const updated = await Todo.findByIdAndUpdate(_id, data, { new: true });
-
     if (!updated) {
-      return NextResponse.json(
-        { message: `Todo with id ${_id} not found` },
-        { status: 404 }
-      );
+      await logEvent({ level: 'warn', message: 'Todo not found', meta: { _id }, userId });
+      return NextResponse.json({ message: `Todo with id ${_id} not found` }, { status: 404 });
     }
 
-    return NextResponse.json(
-      { message: `Todo updated successfully`, updated },
-      { status: 200 }
-    );
+    await logEvent({ level: 'info', message: 'Todo patched successfully', meta: { _id, data }, userId });
+    return NextResponse.json({ message: 'Todo updated successfully', updated }, { status: 200 });
   } catch (error) {
-    console.error('Error', error);
-    return NextResponse.json(
-      { message: 'Error updating Todo' },
-      { status: 500 }
-    );
+    await logEvent({ level: 'error', message: 'Error patching Todo', meta: { _id, error: error.message }, userId });
+    return NextResponse.json({ message: 'Error updating Todo' }, { status: 500 });
   }
 }

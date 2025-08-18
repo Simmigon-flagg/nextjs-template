@@ -10,7 +10,7 @@ const UserSchema = new Schema(
       required: [true, 'Email is required'],
     },
     name: String,
-    image: String, // Google profile image URL
+    image: String, 
     imageId: {
       type: Schema.Types.ObjectId,
       ref: 'uploads.files',
@@ -32,14 +32,24 @@ const UserSchema = new Schema(
   { timestamps: true }
 );
 
-// ✅ Hash password before saving
+
 UserSchema.pre('save', async function (next) {
-  if (!this.isModified('password')) return next(); // Only hash if password is new/changed
+  if (!this.isModified('password')) return next(); 
 
   const salt = await bcrypt.genSalt(10);
   this.password = await bcrypt.hash(this.password, salt);
   next();
 });
+
+UserSchema.methods.createPasswordResetToken = function () {
+  const resetToken = require('crypto').randomBytes(32).toString('hex');
+  this.passwordResetToken = require('crypto')
+    .createHash('sha256')
+    .update(resetToken)
+    .digest('hex');
+  this.passwordResetExpires = Date.now() + 10 * 60 * 1000; // 10 min
+  return resetToken;
+};
 
 const User = models.User || model('User', UserSchema);
 export default User;

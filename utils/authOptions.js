@@ -5,6 +5,7 @@ import User from '../models/user';
 import bcrypt from 'bcryptjs';
 import { connectToDatabase } from './database';
 import crypto from 'crypto';
+import { logEvent } from './logger';
 
 export async function authorizeFn(credentials) {
   if (!credentials) throw new Error('Missing email or password');
@@ -15,19 +16,33 @@ export async function authorizeFn(credentials) {
 
   const user = await User.findOne({ email });
 
-  if (!user) throw new Error('User not found');
-  console.log(user)
+  if (!user) {
+    await logEvent({
+      level: 'warn',
+      message: 'User not found during credentials login',
+      meta: { email: credentials.email },
+    });
+    throw new Error('User not found');
+  }
+
   const isValidPassword = await bcrypt.compare(password, user.password);
-  if (!isValidPassword) throw new Error('Invalid password');
+  if (!isValidPassword) {
+    await logEvent({
+      level: 'warn',
+      message: 'Invalid password attempt',
+      meta: { email: credentials.email },
+    });
+    throw new Error('Invalid password');
+  }
 
   const refreshToken = crypto.randomBytes(40).toString('hex');
   user.refreshToken = refreshToken;
   await user.save();
-
   return {
     id: user._id.toString(),
     email: user.email,
     name: user.name,
+    image: user.image
   };
 }
 
@@ -48,15 +63,14 @@ export const authOptions = {
   ],
   callbacks: {
     async jwt({ token, user, account, profile }) {
-      // Credentials login
-   
+      
       if (user) {
         token.userId = user.id;
         token.email = user.email;
         token.name = user.name;
+        token.image = user?.image;
       }
 
-      // Google login
       if (account?.provider === 'google' && profile) {
         await connectToDatabase();
 
@@ -66,8 +80,15 @@ export const authOptions = {
             email: profile.email,
             name: profile.name,
             googleId: profile.sub,
-            password: crypto.randomBytes(20).toString('hex'), // satisfies required
-            image: profile.picture, // save Google profile picture
+            password: crypto.randomBytes(20).toString('hex'),
+            image: profile.picture,
+          });
+
+          await logEvent({
+            level: 'info',
+            message: 'New user created',
+            userId: dbUser._id.toString(),
+            meta: { email: dbUser.email, provider: 'google' },
           });
         } else if (!dbUser.image) {
           dbUser.image = profile.picture;
@@ -98,6 +119,54 @@ export const authOptions = {
   secret: process.env.NEXTAUTH_SECRET,
   pages: {
     signIn: '/login',
+  },
+  events: {
+    async signIn({ user, account }) {
+      await connectToDatabase();
+
+      let dbUser = await User.findOne({ email: user.email });
+
+      if (!dbUser) {
+        dbUser = await User.create({
+          email: user.email,
+          name: user.name,
+          googleId: user.id,
+          password: crypto.randomBytes(20).toString('hex'),
+          image: user.image,
+        });
+      }
+
+      await logEvent({
+        level: 'info',
+        message: 'User signed in',
+        userId: dbUser._id.toString(),
+        meta: { provider: account?.provider },
+      });
+    },
+    async signOut({ token }) {
+    
+      await logEvent({
+        level: 'info',
+        message: 'User signed out',
+        userId: token.userId, // ✅ consistent with signIn/createUser
+      });
+    },
+    async createUser({ user }) {
+      
+      await logEvent({
+        level: 'info',
+        message: 'New user created',
+        userId: user.id,
+        meta: { email: user.email },
+      });
+    },
+    async error(error) {
+      await logEvent({
+        level: 'error',
+        message: 'NextAuth error',
+        meta: { error: error?.message || error },
+      });
+    },
   },
 };
 

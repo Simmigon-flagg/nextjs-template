@@ -5,6 +5,7 @@ import { GridFSBucket } from 'mongodb';
 import { connectToDatabase } from '@/utils/database';
 import Todo from '@/models/todo';
 import { Readable } from 'stream';
+import { log } from '../../../../../utils/logger';
 
 export async function POST(req, { params }) {
   await connectToDatabase();
